@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import Link from "next/link";
 
 export interface Me {
   id: string;
@@ -42,8 +43,23 @@ export function UserMenu() {
   }
   return (
     <div className="user-menu">
-      <span>{me.full_name} · <span className="role">{me.role.toLowerCase()}</span></span>
+      <Link href="/account" title="My account">
+        <span className="who">{me.full_name} · <span className="role">{me.role.toLowerCase()}</span></span>
+        <span className="who-short">Account</span>
+      </Link>
       <button className="link-btn" onClick={signOut}>Sign out</button>
     </div>
+  );
+}
+
+/** Main navigation; admin-only links appear once the session is known. */
+export function NavLinks() {
+  const me = useMe();
+  return (
+    <nav>
+      <Link href="/">Registry map</Link>
+      <Link href="/inspector">Encroachment inspector</Link>
+      {me?.role === "ADMIN" && <Link href="/users">Accounts</Link>}
+    </nav>
   );
 }

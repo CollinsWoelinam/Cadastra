@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SessionProvider, UserMenu } from "@/components/Session";
+import { NavLinks, SessionProvider, UserMenu } from "@/components/Session";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,10 +15,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SessionProvider>
           <header className="app-nav">
             <Link href="/" className="brand">Cadastra</Link>
-            <nav>
-              <Link href="/">Registry map</Link>
-              <Link href="/inspector">Encroachment inspector</Link>
-            </nav>
+            <NavLinks />
             <UserMenu />
           </header>
           <main>{children}</main>

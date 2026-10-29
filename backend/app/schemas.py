@@ -101,6 +101,8 @@ class User(BaseModel):
     role: Role
     is_active: bool
     created_at: datetime
+    # Last sign-in or session refresh; only filled in the admin user list.
+    last_active_at: datetime | None = None
 
 
 class LoginRequest(BaseModel):
@@ -133,3 +135,8 @@ class UserUpdate(BaseModel):
     role: Role | None = None
     is_active: bool | None = None
     password: str | None = Field(default=None, min_length=12, max_length=128)
+
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(max_length=128)
+    new_password: str = Field(min_length=12, max_length=128)

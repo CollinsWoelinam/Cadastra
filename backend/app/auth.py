@@ -95,6 +95,14 @@ def record_login_attempt(conn: Connection, email: str, ip: str | None, succeeded
     conn.execute("DELETE FROM login_attempts WHERE attempted_at < now() - interval '1 day'")
 
 
+def clear_login_failures(conn: Connection, email: str) -> None:
+    conn.execute("DELETE FROM login_attempts WHERE email = %s AND NOT succeeded", (email.strip().lower(),))
+
+
+def set_password(conn: Connection, user_id: UUID, password: str) -> None:
+    conn.execute("UPDATE users SET password_hash = %s WHERE id = %s", (hash_password(password), user_id))
+
+
 def issue_tokens(conn: Connection, user: dict) -> dict:
     now = datetime.now(timezone.utc)
     access_exp = now + timedelta(minutes=settings.access_token_ttl_minutes)

@@ -3,7 +3,7 @@ import { clearSessionCookies, fetchAsUser, setSessionCookies } from "@/lib/sessi
 
 // Token-issuing endpoints are reachable only through /api/auth, which keeps the
 // tokens in httpOnly cookies instead of handing them to page scripts.
-const BLOCKED = new Set(["auth/login", "auth/refresh", "auth/logout"]);
+const BLOCKED = new Set(["auth/login", "auth/refresh", "auth/logout", "auth/password"]);
 const PASS_HEADERS = ["content-type", "content-disposition", "cache-control", "www-authenticate"];
 
 async function forward(request: NextRequest, ctx: RouteContext<"/core/[...path]">) {

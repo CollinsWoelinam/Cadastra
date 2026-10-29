@@ -20,7 +20,7 @@ docker compose run --rm api python -m scripts.create_user admin@example.gh "Full
 |---|---|
 | SURVEYOR | Submit surveys (field app); view parcels |
 | REVIEWER | Approve / reject surveys (portal); view parcels |
-| ADMIN | Everything above, plus `GET/POST/PATCH /users` |
+| ADMIN | Everything above, plus `GET/POST/PATCH /users` (the portal's **Accounts** page) |
 
 - Nobody can review a parcel they submitted; submitter, reviewer and every audit event record who acted.
 - `POST /auth/login` returns a 15-minute JWT access token and a 30-day refresh token. Refresh tokens are stored
@@ -29,6 +29,9 @@ docker compose run --rm api python -m scripts.create_user admin@example.gh "Full
   address, return `429` with `Retry-After`. Counts live in Postgres, so they hold across API instances. Behind a
   proxy, set uvicorn's `FORWARDED_ALLOW_IPS` to the proxy addresses so the real client address is used; the
   portal forwards the browser's `X-Forwarded-For`.
+- Users change their own password with `POST /auth/password` (current password required, throttled like sign-in);
+  it ends all their other sessions and returns a fresh token pair. An admin password reset also lifts a sign-in
+  lockout.
 - Deactivating a user or changing their password revokes their sessions; role changes apply on the next request.
 - `JWT_SECRET` (32+ chars) is required. `docker-compose.yml` has a dev fallback — set a real secret anywhere shared.
 - The seed script's dev accounts (`admin@`, `surveyor@`, `reviewer@cadastra.local`, password

@@ -13,7 +13,11 @@ Admin = require_role("ADMIN")
 
 @router.get("", response_model=list[User])
 def list_users(conn: Conn, _=Admin):
-    return conn.execute(f"SELECT {USER_COLUMNS} FROM users ORDER BY full_name").fetchall()
+    return conn.execute(f"""
+        SELECT {USER_COLUMNS},
+               (SELECT max(created_at) FROM refresh_tokens t WHERE t.user_id = users.id) AS last_active_at
+        FROM users ORDER BY full_name
+    """).fetchall()
 
 
 @router.post("", response_model=User, status_code=201)
@@ -45,4 +49,7 @@ def update_user(user_id: UUID, body: UserUpdate, conn: Conn, admin=Admin):
         raise HTTPException(404, "user not found")
     if body.is_active is False or body.password is not None:
         auth.revoke_all(conn, user_id)
+    if body.password is not None:
+        # A reset is how a locked-out user gets back in, so lift the sign-in throttle too.
+        auth.clear_login_failures(conn, user["email"])
     return user

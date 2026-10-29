@@ -53,9 +53,29 @@ export interface SurveyPlan {
   perimeter_m: number;
 }
 
+export type Role = "SURVEYOR" | "REVIEWER" | "ADMIN";
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  role: Role;
+  is_active: boolean;
+  created_at: string;
+  last_active_at: string | null;
+}
+
+/** Human-readable text for an API error body's `detail`. */
+export function detailMessage(detail: unknown, fallback: string): string {
+  if (typeof detail === "string") return detail;
+  // Request validation errors: [{ loc, msg }, ...]
+  if (Array.isArray(detail)) return detail.map((d: { msg?: string }) => d.msg).filter(Boolean).join("; ") || fallback;
+  return (detail as { message?: string })?.message ?? fallback;
+}
+
 export class ApiError extends Error {
   constructor(public status: number, public detail: unknown) {
-    super(typeof detail === "string" ? detail : (detail as { message?: string })?.message ?? `HTTP ${status}`);
+    super(detailMessage(detail, `HTTP ${status}`));
   }
 }
 
@@ -91,6 +111,11 @@ export const api = {
     request<Parcel>(`/parcels/${id}/approve`, { method: "POST", body: JSON.stringify({ note: note || null }) }),
   reject: (id: string, note: string) =>
     request<Parcel>(`/parcels/${id}/reject`, { method: "POST", body: JSON.stringify({ note: note || null }) }),
+  users: () => request<User[]>("/users"),
+  createUser: (body: { email: string; full_name: string; password: string; role: Role }) =>
+    request<User>("/users", { method: "POST", body: JSON.stringify(body) }),
+  updateUser: (id: string, patch: Partial<Pick<User, "full_name" | "role" | "is_active">> & { password?: string }) =>
+    request<User>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
 };
 
 export const SQFT_PER_SQM = 10.763910416709722;

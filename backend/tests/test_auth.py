@@ -182,3 +182,53 @@ def test_one_address_guessing_many_accounts_is_throttled(app_client, accounts, l
     for i in range(6):
         assert _login(app_client, f"user{i}@test.gh", "wrong-password-0").status_code == 401
     assert _login(app_client, "reviewer@test.gh").status_code == 429
+
+
+# --- Account management ------------------------------------------------------------
+
+def test_user_list_shows_last_activity(app_client, admin, accounts):
+    login_as(app_client, accounts, "surveyor2")
+    users = {u["email"]: u for u in admin.get("/users").json()}
+    assert users["surveyor2@test.gh"]["last_active_at"] is not None
+
+
+def test_password_reset_lifts_the_sign_in_lockout(app_client, admin, accounts, limits):
+    uid = accounts["surveyor2"]["id"]
+    for _ in range(3):
+        _login(app_client, "surveyor2@test.gh", "wrong-password-0")
+    assert _login(app_client, "surveyor2@test.gh").status_code == 429
+    try:
+        assert admin.patch(f"/users/{uid}", json={"password": "a-brand-new-password"}).status_code == 200
+        assert _login(app_client, "surveyor2@test.gh", "a-brand-new-password").status_code == 200
+    finally:
+        admin.patch(f"/users/{uid}", json={"password": PASSWORD})
+
+
+def test_users_change_their_own_password(app_client, accounts):
+    old = login_as(app_client, accounts, "surveyor2")
+    old_refresh = app_client.post("/auth/login", json={"email": "surveyor2@test.gh", "password": PASSWORD}).json()
+    body = {"current_password": "not-my-password", "new_password": "a-brand-new-password"}
+    assert old.post("/auth/password", json=body).status_code == 400
+    assert old.post("/auth/password", json={**body, "current_password": PASSWORD, "new_password": "short"}).status_code == 422
+
+    r = old.post("/auth/password", json={**body, "current_password": PASSWORD})
+    try:
+        assert r.status_code == 200
+        # Other sessions end; the caller gets a fresh pair.
+        assert app_client.post("/auth/refresh", json={"refresh_token": old_refresh["refresh_token"]}).status_code == 401
+        assert As(app_client, r.json()["access_token"], {}).get("/auth/me").status_code == 200
+        assert _login(app_client, "surveyor2@test.gh").status_code == 401
+        assert _login(app_client, "surveyor2@test.gh", "a-brand-new-password").status_code == 200
+    finally:
+        with psycopg.connect(TEST_URL, autocommit=True) as conn:
+            from app.auth import hash_password
+            conn.execute("UPDATE users SET password_hash = %s WHERE email = 'surveyor2@test.gh'",
+                         (hash_password(PASSWORD),))
+
+
+def test_wrong_current_password_counts_towards_throttle(app_client, accounts, limits):
+    s2 = login_as(app_client, accounts, "surveyor2")
+    body = {"current_password": "not-my-password", "new_password": "a-brand-new-password"}
+    for _ in range(3):
+        assert s2.post("/auth/password", json=body).status_code == 400
+    assert s2.post("/auth/password", json=body).status_code == 429
