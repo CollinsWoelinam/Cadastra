@@ -16,7 +16,9 @@ services:
       retries: 30
 
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      target: dev
     environment:
       DATABASE_URL: postgresql://cadastra:cadastra@db:5432/cadastra
       # Dev fallback only. Set a random 32+ char JWT_SECRET in any shared or real deployment.

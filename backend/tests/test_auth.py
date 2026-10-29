@@ -1,4 +1,5 @@
 import psycopg
+import pytest
 
 from .conftest import PASSWORD, TEST_URL, As, login_as, square
 
@@ -127,3 +128,57 @@ def test_passwords_are_hashed(accounts):
     with psycopg.connect(TEST_URL) as conn:
         stored = conn.execute("SELECT password_hash FROM users WHERE email = 'surveyor@test.gh'").fetchone()[0]
     assert stored.startswith("$argon2id$") and PASSWORD not in stored
+
+
+# --- Sign-in throttling ------------------------------------------------------------
+
+@pytest.fixture
+def limits(monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "login_max_failures_per_email", 3)
+    monkeypatch.setattr(settings, "login_max_failures_per_ip", 6)
+    return settings
+
+
+def _login(app_client, email, password=PASSWORD):
+    return app_client.post("/auth/login", json={"email": email, "password": password})
+
+
+def test_repeated_failures_lock_the_email(app_client, accounts, limits):
+    for _ in range(3):
+        assert _login(app_client, "surveyor2@test.gh", "wrong-password-0").status_code == 401
+    # Even the right password is refused until the window passes, so guessing can't continue.
+    r = _login(app_client, "SURVEYOR2@test.gh")
+    assert r.status_code == 429
+    assert 0 < int(r.headers["retry-after"]) <= limits.login_window_minutes * 60
+    assert _login(app_client, "reviewer@test.gh").status_code == 200  # other accounts unaffected
+
+
+def test_unknown_emails_are_throttled_too(app_client, accounts, limits):
+    for _ in range(3):
+        _login(app_client, "ghost@test.gh", "wrong-password-0")
+    assert _login(app_client, "ghost@test.gh", "wrong-password-0").status_code == 429
+
+
+def test_success_resets_the_email_count(app_client, accounts, limits):
+    for _ in range(2):
+        _login(app_client, "surveyor2@test.gh", "wrong-password-0")
+    assert _login(app_client, "surveyor2@test.gh").status_code == 200
+    for _ in range(2):
+        _login(app_client, "surveyor2@test.gh", "wrong-password-0")
+    assert _login(app_client, "surveyor2@test.gh").status_code == 200
+
+
+def test_failures_age_out_of_the_window(app_client, accounts, limits):
+    for _ in range(3):
+        _login(app_client, "surveyor2@test.gh", "wrong-password-0")
+    with psycopg.connect(TEST_URL, autocommit=True) as conn:
+        conn.execute("UPDATE login_attempts SET attempted_at = attempted_at - interval '16 minutes'")
+    assert _login(app_client, "surveyor2@test.gh").status_code == 200
+
+
+def test_one_address_guessing_many_accounts_is_throttled(app_client, accounts, limits):
+    # TestClient requests all come from the same address.
+    for i in range(6):
+        assert _login(app_client, f"user{i}@test.gh", "wrong-password-0").status_code == 401
+    assert _login(app_client, "reviewer@test.gh").status_code == 429

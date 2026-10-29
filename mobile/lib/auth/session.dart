@@ -113,6 +113,10 @@ class AuthSession extends ChangeNotifier {
       return 'Cannot reach the registry. Check your connection and try again.';
     }
     if (res.statusCode == 401) return 'Incorrect email or password.';
+    if (res.statusCode == 429) {
+      final minutes = ((int.tryParse(res.headers['retry-after'] ?? '') ?? 900) / 60).ceil();
+      return 'Too many sign-in attempts. Try again in $minutes minute${minutes == 1 ? '' : 's'}.';
+    }
     if (res.statusCode != 200) return 'Sign-in failed (HTTP ${res.statusCode}).';
     final pair = jsonDecode(res.body) as Map<String, dynamic>;
     final signedIn = SessionUser.fromJson(pair['user'] as Map<String, dynamic>);

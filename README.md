@@ -25,6 +25,10 @@ docker compose run --rm api python -m scripts.create_user admin@example.gh "Full
 - Nobody can review a parcel they submitted; submitter, reviewer and every audit event record who acted.
 - `POST /auth/login` returns a 15-minute JWT access token and a 30-day refresh token. Refresh tokens are stored
   hashed and rotate on each `POST /auth/refresh`; replaying a rotated token revokes all of that user's sessions.
+- Sign-in is throttled: 10 failures for one email in 15 minutes (cleared by a success), or 100 from one client
+  address, return `429` with `Retry-After`. Counts live in Postgres, so they hold across API instances. Behind a
+  proxy, set uvicorn's `FORWARDED_ALLOW_IPS` to the proxy addresses so the real client address is used; the
+  portal forwards the browser's `X-Forwarded-For`.
 - Deactivating a user or changing their password revokes their sessions; role changes apply on the next request.
 - `JWT_SECRET` (32+ chars) is required. `docker-compose.yml` has a dev fallback — set a real secret anywhere shared.
 - The seed script's dev accounts (`admin@`, `surveyor@`, `reviewer@cadastra.local`, password
@@ -92,6 +96,10 @@ dart run build_runner build           # drift database code
 flutter test                          # unit + widget tests (no network)
 flutter run                           # iOS simulator reaches the API at localhost:8000
 flutter run --dart-define=CADASTRA_API_URL=http://192.168.1.20:8000   # physical device
+# Release builds: point at the deployed API and a production basemap
+flutter build apk --dart-define=CADASTRA_API_URL=https://api.registry.example.gov.gh \
+  --dart-define=BASEMAP_URL='https://tiles.example.com/{z}/{x}/{y}.png' --dart-define=BASEMAP_ATTRIBUTION='© …'
+
 # Live end-to-end test (needs the Core Engine running and seeded):
 flutter test integration_test/field_survey_test.dart -d <simulator-id>
 ```
@@ -109,3 +117,33 @@ flutter test integration_test/field_survey_test.dart -d <simulator-id>
   surveyor's work under another's name.
 - GPS comes through a `PositionSource` interface; an external RTK receiver can be added as another implementation.
 - Debug builds allow plain HTTP to a local API (iOS `NSAllowsLocalNetworking`, Android debug manifest only).
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request: backend tests against a PostGIS
+service container; portal lint, type check and production build; field app analyze and tests, plus a check that the
+committed drift code (`db.g.dart`) matches its schema.
+
+## Deployment (`deploy/`)
+
+One host running Docker Compose: Caddy terminates HTTPS (certificates issued and renewed automatically) in front of
+the portal and the Core Engine, which share a private network with PostGIS. Nothing but Caddy publishes a port.
+
+```bash
+cp deploy/.env.example deploy/.env      # domains, secrets (openssl rand -hex 32), basemap
+docker compose -f deploy/docker-compose.yml up -d --build
+# First admin account (prompts for a password):
+docker compose -f deploy/docker-compose.yml exec api python -m scripts.create_user ops@lands.gov.gh "Ops Admin" ADMIN
+# Backup:
+docker compose -f deploy/docker-compose.yml exec -T db pg_dump -U cadastra -Fc cadastra > cadastra-$(date +%F).dump
+```
+
+- `PORTAL_DOMAIN` serves the registry portal; `API_DOMAIN` serves the Core Engine for the field app. Both DNS
+  records must point at the host before first start.
+- The portal image is built on Playwright's image for certificate rendering; keep its tag in `web/Dockerfile` equal to
+  the pinned `playwright` version in `web/package.json`.
+- The basemap is compiled into the portal at build time (`BASEMAP_TILES`); rebuild after changing it. The public
+  OpenStreetMap tile servers forbid production use.
+- Run a single portal container: refresh-token rotation is de-duplicated per process. Scaling it out needs sticky
+  sessions.
+- Never run `scripts/seed.py` here.

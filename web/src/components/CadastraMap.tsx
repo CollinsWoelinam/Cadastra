@@ -13,9 +13,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { Feature, FeatureCollection, Geometry, Polygon, Position } from "geojson";
 import type { Conflict, ParcelStatus } from "@/lib/api";
 
-const BASEMAP_TILES = process.env.NEXT_PUBLIC_BASEMAP_TILES ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const BASEMAP_TILES = process.env.NEXT_PUBLIC_BASEMAP_TILES || "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const BASEMAP_ATTRIBUTION =
-  process.env.NEXT_PUBLIC_BASEMAP_ATTRIBUTION ?? "© OpenStreetMap contributors";
+  process.env.NEXT_PUBLIC_BASEMAP_ATTRIBUTION || "© OpenStreetMap contributors";
 // East Legon, Accra.
 const DEFAULT_CENTER: [number, number] = [-0.1525, 5.6305];
 

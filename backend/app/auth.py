@@ -56,6 +56,45 @@ def authenticate(conn: Connection, email: str, password: str) -> dict | None:
     return row
 
 
+def _nth_recent_failure(conn: Connection, where: str, params: tuple, limit: int) -> datetime | None:
+    """The limit-th most recent failure in the window, if there are that many."""
+    row = conn.execute(f"""
+        SELECT attempted_at FROM login_attempts
+        WHERE NOT succeeded AND attempted_at > now() - make_interval(mins => %s) AND {where}
+        ORDER BY attempted_at DESC OFFSET %s LIMIT 1
+    """, (settings.login_window_minutes, *params, limit - 1)).fetchone()
+    return row["attempted_at"] if row else None
+
+
+def login_retry_after(conn: Connection, email: str, ip: str | None) -> int | None:
+    """Seconds until sign-in may be tried again for this email and IP, or None if allowed.
+
+    Takes a per-email transaction lock, so concurrent guesses at one account are
+    counted one at a time; hold the transaction until the attempt is recorded.
+    """
+    email = email.strip().lower()
+    conn.execute("SELECT pg_advisory_xact_lock(727003, hashtext(%s))", (email,))
+    blocked = [
+        _nth_recent_failure(conn, """email = %s AND attempted_at > coalesce(
+            (SELECT max(attempted_at) FROM login_attempts WHERE email = %s AND succeeded), '-infinity')""",
+                            (email, email), settings.login_max_failures_per_email),
+    ]
+    if ip:
+        blocked.append(_nth_recent_failure(conn, "ip = %s", (ip,), settings.login_max_failures_per_ip))
+    blocked = [t for t in blocked if t is not None]
+    if not blocked:
+        return None
+    # Allowed again once the failure that reached the limit leaves the window.
+    until = max(blocked) + timedelta(minutes=settings.login_window_minutes)
+    return max(1, int((until - datetime.now(timezone.utc)).total_seconds()) + 1)
+
+
+def record_login_attempt(conn: Connection, email: str, ip: str | None, succeeded: bool) -> None:
+    conn.execute("INSERT INTO login_attempts (email, ip, succeeded) VALUES (%s, %s, %s)",
+                 (email.strip().lower(), ip, succeeded))
+    conn.execute("DELETE FROM login_attempts WHERE attempted_at < now() - interval '1 day'")
+
+
 def issue_tokens(conn: Connection, user: dict) -> dict:
     now = datetime.now(timezone.utc)
     access_exp = now + timedelta(minutes=settings.access_token_ttl_minutes)

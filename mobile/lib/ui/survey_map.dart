@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../app.dart';
+import '../config.dart';
 import '../location/position_source.dart';
 
 const _accra = LatLng(5.6037, -0.1870);
@@ -34,7 +35,7 @@ class SurveyMap extends StatelessWidget {
       children: [
         if (Services.of(context).showBasemap)
           TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            urlTemplate: basemapUrl,
             userAgentPackageName: 'com.cadastra.cadastra_field',
             maxNativeZoom: 19,
           ),
@@ -85,7 +86,7 @@ class SurveyMap extends StatelessWidget {
             child: Container(
               color: Colors.white70,
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: const Text('© OpenStreetMap contributors', style: TextStyle(fontSize: 10)),
+              child: const Text(basemapAttribution, style: TextStyle(fontSize: 10)),
             ),
           ),
       ],

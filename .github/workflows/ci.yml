@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Core engine
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: cadastra
+          POSTGRES_PASSWORD: cadastra
+          POSTGRES_DB: cadastra
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U cadastra -d cadastra"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Tests create and drop their own cadastra_test database through this connection.
+      DATABASE_URL: postgresql://cadastra:cadastra@localhost:5432/cadastra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q
+
+  web:
+    name: Registry portal
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+
+  mobile:
+    name: Field app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.4"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Generated database code is up to date
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code -- lib
+      - run: flutter analyze
+      - run: flutter test

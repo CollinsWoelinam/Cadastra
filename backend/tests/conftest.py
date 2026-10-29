@@ -86,7 +86,7 @@ def clean_tables(client):
     yield
     with psycopg.connect(TEST_URL, autocommit=True) as conn:
         conn.execute("ALTER TABLE parcel_events DISABLE TRIGGER parcel_events_append_only")
-        conn.execute("TRUNCATE parcel_events, survey_points, parcels")
+        conn.execute("TRUNCATE parcel_events, survey_points, parcels, login_attempts")
         conn.execute("ALTER TABLE parcel_events ENABLE TRIGGER parcel_events_append_only")
 
 

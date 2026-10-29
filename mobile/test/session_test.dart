@@ -30,6 +30,12 @@ void main() {
     expect(store.value, isNull);
   });
 
+  test('throttled sign-in says how long to wait', () async {
+    final session = AuthSession('http://core', MemoryTokenStore(), core.client);
+    expect(await session.login('kojo@test.gh', 'throttled'), 'Too many sign-in attempts. Try again in 9 minutes.');
+    expect(session.signedIn, isFalse);
+  });
+
   test('accounts that cannot submit are refused and their token revoked', () async {
     core.user = {'id': 'u-9', 'email': 'r@test.gh', 'full_name': 'Rev', 'role': 'REVIEWER'};
     final session = AuthSession('http://core', MemoryTokenStore(), core.client);

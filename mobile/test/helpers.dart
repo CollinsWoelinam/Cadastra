@@ -90,6 +90,9 @@ class FakeCore {
     final body = req.body.isEmpty ? <String, dynamic>{} : jsonDecode(req.body) as Map<String, dynamic>;
     switch (req.url.path) {
       case '/auth/login':
+        if (body['password'] == 'throttled') {
+          return http.Response(jsonEncode({'detail': 'too many sign-in attempts'}), 429, headers: {'retry-after': '540'});
+        }
         return body['password'] == 'right-password'
             ? jsonResponse(_pair())
             : jsonResponse({'detail': 'incorrect email or password'}, 401);

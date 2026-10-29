@@ -1,0 +1,27 @@
+# Certificates are obtained and renewed automatically for both domains.
+{
+	email {$ACME_EMAIL}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
+# Registry portal.
+{$PORTAL_DOMAIN} {
+	import common
+	header X-Frame-Options DENY
+	reverse_proxy web:3000
+}
+
+# Core Engine, used directly by the field app.
+{$API_DOMAIN} {
+	import common
+	reverse_proxy api:8000
+}

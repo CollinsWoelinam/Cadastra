@@ -13,5 +13,12 @@ class Settings(BaseSettings):
     access_token_ttl_minutes: int = 15
     refresh_token_ttl_days: int = 30
 
+    # Sign-in throttling: failures within the window, per email and per client IP.
+    # A success clears the email's count; the IP limit is looser because field crews
+    # often share one carrier or office address.
+    login_window_minutes: int = 15
+    login_max_failures_per_email: int = 10
+    login_max_failures_per_ip: int = 100
+
 
 settings = Settings()
