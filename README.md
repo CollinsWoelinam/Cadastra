@@ -10,13 +10,31 @@ FastAPI + PostgreSQL/PostGIS + PyProj.
 docker compose up -d --build          # API on :8000, Postgres on :5433
 open http://localhost:8000/docs       # interactive API docs
 docker compose run --rm -e DATABASE_URL=postgresql://cadastra:cadastra@db:5432/cadastra api pytest -q
-docker compose run --rm api python -m scripts.seed   # demo parcels around East Legon, Accra
+docker compose run --rm api python -m scripts.seed   # DEV ONLY: demo accounts + parcels around East Legon
+docker compose run --rm api python -m scripts.create_user admin@example.gh "Full Name" ADMIN   # real accounts
 ```
+
+### Accounts and roles
+
+| Role | Can |
+|---|---|
+| SURVEYOR | Submit surveys (field app); view parcels |
+| REVIEWER | Approve / reject surveys (portal); view parcels |
+| ADMIN | Everything above, plus `GET/POST/PATCH /users` |
+
+- Nobody can review a parcel they submitted; submitter, reviewer and every audit event record who acted.
+- `POST /auth/login` returns a 15-minute JWT access token and a 30-day refresh token. Refresh tokens are stored
+  hashed and rotate on each `POST /auth/refresh`; replaying a rotated token revokes all of that user's sessions.
+- Deactivating a user or changing their password revokes their sessions; role changes apply on the next request.
+- `JWT_SECRET` (32+ chars) is required. `docker-compose.yml` has a dev fallback — set a real secret anywhere shared.
+- The seed script's dev accounts (`admin@`, `surveyor@`, `reviewer@cadastra.local`, password
+  `cadastra-dev-password`) must never exist on a real registry.
 
 Migrations in `backend/migrations/*.sql` are applied automatically on API start.
 
 | Endpoint | Purpose |
 |---|---|
+| `POST /auth/login` · `/refresh` · `/logout`, `GET /auth/me` | Sessions (everything except `/health` needs a bearer token) |
 | `POST /parcels/validate` | Dry-run: topology, geodetic area/perimeter, conflicts |
 | `POST /parcels` | Submit a surveyed boundary (PENDING). `client_ref` makes retries idempotent |
 | `GET /parcels?bbox=&status=` | GeoJSON FeatureCollection |
@@ -56,10 +74,12 @@ Environment: `CORE_API_URL` (default `http://localhost:8000`), `NEXT_PUBLIC_BASE
 certificate from; defaults to the request origin).
 
 Notes:
-- The browser reaches the Core Engine via the `/core/*` rewrite, so no CORS configuration is needed.
+- Sign-in sets httpOnly cookies; page scripts never see tokens. `/core/*` is a server-side proxy that attaches the
+  access token and refreshes the session when it expires. Concurrent refreshes are collapsed into one call per
+  server process — run a single instance or use sticky sessions.
+- Only reviewers and admins see approve/reject, and not on surveys they submitted.
 - The default basemap is the public OpenStreetMap tile server, whose usage policy forbids heavy production use;
   switch to a hosted or self-hosted tile provider before launch.
-- There is no authentication yet: anyone who can reach the portal can approve or reject surveys.
 
 ## Phase 3 — Field App (`mobile/`)
 
@@ -83,5 +103,9 @@ flutter test integration_test/field_survey_test.dart -d <simulator-id>
 - Every node is written to SQLite as it is captured. Finished surveys queue for upload; the survey id is sent as
   `client_ref`, so retries never duplicate a parcel. Network/5xx errors retry automatically (on reconnect, every
   2 minutes, or pull-to-refresh); 4xx refusals (e.g. duplicate title deed) let the surveyor correct and resubmit.
+- Surveyors sign in with SURVEYOR (or ADMIN) accounts; tokens are kept in the iOS Keychain / Android Keystore.
+  Capture needs no network or live session; if the session ends, surveys stay queued and the app asks the surveyor
+  to sign in again. Surveys belong to the account that captured them, so shared devices never upload one
+  surveyor's work under another's name.
 - GPS comes through a `PositionSource` interface; an external RTK receiver can be added as another implementation.
 - Debug builds allow plain HTTP to a local API (iOS `NSAllowsLocalNetworking`, Android debug manifest only).

@@ -4,16 +4,19 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 import 'app.dart';
+import 'auth/session.dart';
 import 'config.dart';
 import 'data/db.dart';
 import 'location/position_source.dart';
 import 'services/api_client.dart';
 import 'services/sync_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final db = AppDatabase();
-  final sync = SyncService(db, ApiClient(apiBaseUrl));
+  final session = AuthSession(apiBaseUrl, SecureTokenStore());
+  await session.load();
+  final sync = SyncService(db, ApiClient(apiBaseUrl, session));
 
   // Upload whenever connectivity returns, and poll review status while the app is open.
   Connectivity().onConnectivityChanged.listen((results) {
@@ -23,6 +26,6 @@ void main() {
   sync.sync();
 
   runApp(CadastraApp(
-    services: AppServices(db: db, sync: sync, positionSource: DevicePositionSource.new),
+    services: AppServices(db: db, session: session, sync: sync, positionSource: DevicePositionSource.new),
   ));
 }

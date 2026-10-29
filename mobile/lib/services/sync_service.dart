@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 
+import '../auth/session.dart';
 import '../data/db.dart';
 import 'api_client.dart';
 
@@ -15,6 +16,9 @@ class SyncService extends ChangeNotifier {
 
   /// Last connectivity problem, cleared on the next successful contact.
   String? offlineReason;
+
+  /// The session has ended; uploads wait until the surveyor signs in again.
+  bool needsSignIn = false;
 
   SyncService(this.db, this.api);
 
@@ -31,14 +35,22 @@ class SyncService extends ChangeNotifier {
   }
 
   Future<void> _syncOnce() async {
+    // Only the signed-in surveyor's own surveys are uploaded under their account.
+    final owner = api.session.user?.id;
+    if (owner == null) return;
     try {
-      for (final survey in await db.surveysIn(SyncState.queued)) {
+      for (final survey in await db.surveysIn(SyncState.queued, owner)) {
         await _upload(survey);
       }
-      for (final survey in await db.surveysIn(SyncState.synced)) {
+      for (final survey in await db.surveysIn(SyncState.synced, owner)) {
         if (survey.serverStatus == 'PENDING') await _refresh(survey);
       }
       offlineReason = null;
+      needsSignIn = false;
+    } on AuthRequiredException catch (e) {
+      // Not a refusal: everything stays queued until the surveyor signs in.
+      needsSignIn = true;
+      offlineReason = e.toString();
     } on Exception catch (e) {
       // Network failure: everything stays queued for the next pass.
       offlineReason = 'Offline — will retry ($e)';

@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -5,6 +6,7 @@ import '../app.dart';
 import '../data/db.dart';
 import 'capture_screen.dart';
 import 'format.dart';
+import 'login_screen.dart';
 import 'survey_detail_screen.dart';
 
 class SurveysScreen extends StatelessWidget {
@@ -27,13 +29,27 @@ class SurveysScreen extends StatelessWidget {
                   )
                 : IconButton(tooltip: 'Sync now', icon: const Icon(Icons.sync), onPressed: sync.sync),
           ),
+          const _AccountMenu(),
         ],
       ),
       body: Column(
         children: [
           ListenableBuilder(
             listenable: sync,
-            builder: (context, _) => sync.offlineReason == null
+            builder: (context, _) => sync.needsSignIn
+                ? MaterialBanner(
+                    content: const Text('Your session has ended. Surveys stay on this device until you sign in.'),
+                    leading: const Icon(Icons.lock_clock),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => LoginScreen(email: services.session.user?.email),
+                        )),
+                        child: const Text('Sign in'),
+                      ),
+                    ],
+                  )
+                : sync.offlineReason == null
                 ? const SizedBox.shrink()
                 : MaterialBanner(
                     content: Text(sync.offlineReason!, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -43,7 +59,7 @@ class SurveysScreen extends StatelessWidget {
           ),
           Expanded(
             child: StreamBuilder<List<Survey>>(
-              stream: services.db.watchSurveys(),
+              stream: services.db.watchSurveys(services.session.user!.id),
               builder: (context, snapshot) {
                 final surveys = snapshot.data ?? [];
                 return RefreshIndicator(
@@ -78,11 +94,13 @@ class SurveysScreen extends StatelessWidget {
   Future<void> _newSurvey(BuildContext context) async {
     final details = await showDialog<(String, String)>(context: context, builder: (_) => const SurveyDetailsDialog());
     if (details == null || !context.mounted) return;
-    final db = Services.read(context).db;
+    final services = Services.read(context);
+    final db = services.db;
     final id = const Uuid().v4();
     final now = DateTime.now();
     await db.into(db.surveys).insert(SurveysCompanion.insert(
           id: id,
+          ownerUserId: Value(services.session.user!.id),
           titleDeedNo: details.$1,
           ownerName: details.$2,
           syncState: SyncState.draft,
@@ -186,5 +204,50 @@ class _SurveyDetailsDialogState extends State<SurveyDetailsDialog> {
         ),
       ],
     );
+  }
+}
+
+class _AccountMenu extends StatelessWidget {
+  const _AccountMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final services = Services.of(context);
+    final user = services.session.user!;
+    return PopupMenuButton<String>(
+      tooltip: 'Account',
+      icon: const Icon(Icons.account_circle),
+      onSelected: (_) => _signOut(context),
+      itemBuilder: (_) => [
+        PopupMenuItem(enabled: false, child: Text('${user.fullName}\n${user.email}')),
+        const PopupMenuItem(value: 'logout', child: Text('Sign out')),
+      ],
+    );
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    final services = Services.read(context);
+    final owner = services.session.user!.id;
+    final unsent = [
+      ...await services.db.surveysIn(SyncState.draft, owner),
+      ...await services.db.surveysIn(SyncState.queued, owner),
+      ...await services.db.surveysIn(SyncState.failed, owner),
+    ].length;
+    if (!context.mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign out?'),
+        content: Text(unsent == 0
+            ? 'All your surveys are uploaded.'
+            : '$unsent of your surveys are not uploaded yet. They stay on this device and will upload '
+                'when you sign in again.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sign out')),
+        ],
+      ),
+    );
+    if (ok == true) await services.session.logout();
   }
 }

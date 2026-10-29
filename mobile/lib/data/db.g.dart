@@ -17,6 +17,17 @@ class $SurveysTable extends Surveys with TableInfo<$SurveysTable, Survey> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _titleDeedNoMeta = const VerificationMeta(
     'titleDeedNo',
   );
@@ -152,6 +163,7 @@ class $SurveysTable extends Surveys with TableInfo<$SurveysTable, Survey> {
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    ownerUserId,
     titleDeedNo,
     ownerName,
     syncState,
@@ -181,6 +193,15 @@ class $SurveysTable extends Surveys with TableInfo<$SurveysTable, Survey> {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
     }
     if (data.containsKey('title_deed_no')) {
       context.handle(
@@ -281,6 +302,10 @@ class $SurveysTable extends Surveys with TableInfo<$SurveysTable, Survey> {
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      ),
       titleDeedNo: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title_deed_no'],
@@ -346,6 +371,10 @@ class $SurveysTable extends Surveys with TableInfo<$SurveysTable, Survey> {
 class Survey extends DataClass implements Insertable<Survey> {
   /// Generated on the device; doubles as the upload's idempotency key (client_ref).
   final String id;
+
+  /// Account that captured the survey. Devices can be shared, so each surveyor sees
+  /// and uploads only their own work.
+  final String? ownerUserId;
   final String titleDeedNo;
   final String ownerName;
   final SyncState syncState;
@@ -364,6 +393,7 @@ class Survey extends DataClass implements Insertable<Survey> {
   final DateTime updatedAt;
   const Survey({
     required this.id,
+    this.ownerUserId,
     required this.titleDeedNo,
     required this.ownerName,
     required this.syncState,
@@ -381,6 +411,9 @@ class Survey extends DataClass implements Insertable<Survey> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    if (!nullToAbsent || ownerUserId != null) {
+      map['owner_user_id'] = Variable<String>(ownerUserId);
+    }
     map['title_deed_no'] = Variable<String>(titleDeedNo);
     map['owner_name'] = Variable<String>(ownerName);
     {
@@ -413,6 +446,9 @@ class Survey extends DataClass implements Insertable<Survey> {
   SurveysCompanion toCompanion(bool nullToAbsent) {
     return SurveysCompanion(
       id: Value(id),
+      ownerUserId: ownerUserId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ownerUserId),
       titleDeedNo: Value(titleDeedNo),
       ownerName: Value(ownerName),
       syncState: Value(syncState),
@@ -445,6 +481,7 @@ class Survey extends DataClass implements Insertable<Survey> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Survey(
       id: serializer.fromJson<String>(json['id']),
+      ownerUserId: serializer.fromJson<String?>(json['ownerUserId']),
       titleDeedNo: serializer.fromJson<String>(json['titleDeedNo']),
       ownerName: serializer.fromJson<String>(json['ownerName']),
       syncState: $SurveysTable.$convertersyncState.fromJson(
@@ -466,6 +503,7 @@ class Survey extends DataClass implements Insertable<Survey> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'ownerUserId': serializer.toJson<String?>(ownerUserId),
       'titleDeedNo': serializer.toJson<String>(titleDeedNo),
       'ownerName': serializer.toJson<String>(ownerName),
       'syncState': serializer.toJson<String>(
@@ -485,6 +523,7 @@ class Survey extends DataClass implements Insertable<Survey> {
 
   Survey copyWith({
     String? id,
+    Value<String?> ownerUserId = const Value.absent(),
     String? titleDeedNo,
     String? ownerName,
     SyncState? syncState,
@@ -499,6 +538,7 @@ class Survey extends DataClass implements Insertable<Survey> {
     DateTime? updatedAt,
   }) => Survey(
     id: id ?? this.id,
+    ownerUserId: ownerUserId.present ? ownerUserId.value : this.ownerUserId,
     titleDeedNo: titleDeedNo ?? this.titleDeedNo,
     ownerName: ownerName ?? this.ownerName,
     syncState: syncState ?? this.syncState,
@@ -519,6 +559,9 @@ class Survey extends DataClass implements Insertable<Survey> {
   Survey copyWithCompanion(SurveysCompanion data) {
     return Survey(
       id: data.id.present ? data.id.value : this.id,
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
       titleDeedNo: data.titleDeedNo.present
           ? data.titleDeedNo.value
           : this.titleDeedNo,
@@ -550,6 +593,7 @@ class Survey extends DataClass implements Insertable<Survey> {
   String toString() {
     return (StringBuffer('Survey(')
           ..write('id: $id, ')
+          ..write('ownerUserId: $ownerUserId, ')
           ..write('titleDeedNo: $titleDeedNo, ')
           ..write('ownerName: $ownerName, ')
           ..write('syncState: $syncState, ')
@@ -569,6 +613,7 @@ class Survey extends DataClass implements Insertable<Survey> {
   @override
   int get hashCode => Object.hash(
     id,
+    ownerUserId,
     titleDeedNo,
     ownerName,
     syncState,
@@ -587,6 +632,7 @@ class Survey extends DataClass implements Insertable<Survey> {
       identical(this, other) ||
       (other is Survey &&
           other.id == this.id &&
+          other.ownerUserId == this.ownerUserId &&
           other.titleDeedNo == this.titleDeedNo &&
           other.ownerName == this.ownerName &&
           other.syncState == this.syncState &&
@@ -603,6 +649,7 @@ class Survey extends DataClass implements Insertable<Survey> {
 
 class SurveysCompanion extends UpdateCompanion<Survey> {
   final Value<String> id;
+  final Value<String?> ownerUserId;
   final Value<String> titleDeedNo;
   final Value<String> ownerName;
   final Value<SyncState> syncState;
@@ -618,6 +665,7 @@ class SurveysCompanion extends UpdateCompanion<Survey> {
   final Value<int> rowid;
   const SurveysCompanion({
     this.id = const Value.absent(),
+    this.ownerUserId = const Value.absent(),
     this.titleDeedNo = const Value.absent(),
     this.ownerName = const Value.absent(),
     this.syncState = const Value.absent(),
@@ -634,6 +682,7 @@ class SurveysCompanion extends UpdateCompanion<Survey> {
   });
   SurveysCompanion.insert({
     required String id,
+    this.ownerUserId = const Value.absent(),
     required String titleDeedNo,
     required String ownerName,
     required SyncState syncState,
@@ -655,6 +704,7 @@ class SurveysCompanion extends UpdateCompanion<Survey> {
        updatedAt = Value(updatedAt);
   static Insertable<Survey> custom({
     Expression<String>? id,
+    Expression<String>? ownerUserId,
     Expression<String>? titleDeedNo,
     Expression<String>? ownerName,
     Expression<String>? syncState,
@@ -671,6 +721,7 @@ class SurveysCompanion extends UpdateCompanion<Survey> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
       if (titleDeedNo != null) 'title_deed_no': titleDeedNo,
       if (ownerName != null) 'owner_name': ownerName,
       if (syncState != null) 'sync_state': syncState,
@@ -689,6 +740,7 @@ class SurveysCompanion extends UpdateCompanion<Survey> {
 
   SurveysCompanion copyWith({
     Value<String>? id,
+    Value<String?>? ownerUserId,
     Value<String>? titleDeedNo,
     Value<String>? ownerName,
     Value<SyncState>? syncState,
@@ -705,6 +757,7 @@ class SurveysCompanion extends UpdateCompanion<Survey> {
   }) {
     return SurveysCompanion(
       id: id ?? this.id,
+      ownerUserId: ownerUserId ?? this.ownerUserId,
       titleDeedNo: titleDeedNo ?? this.titleDeedNo,
       ownerName: ownerName ?? this.ownerName,
       syncState: syncState ?? this.syncState,
@@ -726,6 +779,9 @@ class SurveysCompanion extends UpdateCompanion<Survey> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
     }
     if (titleDeedNo.present) {
       map['title_deed_no'] = Variable<String>(titleDeedNo.value);
@@ -775,6 +831,7 @@ class SurveysCompanion extends UpdateCompanion<Survey> {
   String toString() {
     return (StringBuffer('SurveysCompanion(')
           ..write('id: $id, ')
+          ..write('ownerUserId: $ownerUserId, ')
           ..write('titleDeedNo: $titleDeedNo, ')
           ..write('ownerName: $ownerName, ')
           ..write('syncState: $syncState, ')
@@ -1267,6 +1324,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 typedef $$SurveysTableCreateCompanionBuilder =
     SurveysCompanion Function({
       required String id,
+      Value<String?> ownerUserId,
       required String titleDeedNo,
       required String ownerName,
       required SyncState syncState,
@@ -1284,6 +1342,7 @@ typedef $$SurveysTableCreateCompanionBuilder =
 typedef $$SurveysTableUpdateCompanionBuilder =
     SurveysCompanion Function({
       Value<String> id,
+      Value<String?> ownerUserId,
       Value<String> titleDeedNo,
       Value<String> ownerName,
       Value<SyncState> syncState,
@@ -1334,6 +1393,11 @@ class $$SurveysTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1438,6 +1502,11 @@ class $$SurveysTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get titleDeedNo => $composableBuilder(
     column: $table.titleDeedNo,
     builder: (column) => ColumnOrderings(column),
@@ -1510,6 +1579,11 @@ class $$SurveysTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get titleDeedNo => $composableBuilder(
     column: $table.titleDeedNo,
@@ -1614,6 +1688,7 @@ class $$SurveysTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
+                Value<String?> ownerUserId = const Value.absent(),
                 Value<String> titleDeedNo = const Value.absent(),
                 Value<String> ownerName = const Value.absent(),
                 Value<SyncState> syncState = const Value.absent(),
@@ -1629,6 +1704,7 @@ class $$SurveysTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => SurveysCompanion(
                 id: id,
+                ownerUserId: ownerUserId,
                 titleDeedNo: titleDeedNo,
                 ownerName: ownerName,
                 syncState: syncState,
@@ -1646,6 +1722,7 @@ class $$SurveysTableTableManager
           createCompanionCallback:
               ({
                 required String id,
+                Value<String?> ownerUserId = const Value.absent(),
                 required String titleDeedNo,
                 required String ownerName,
                 required SyncState syncState,
@@ -1661,6 +1738,7 @@ class $$SurveysTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => SurveysCompanion.insert(
                 id: id,
+                ownerUserId: ownerUserId,
                 titleDeedNo: titleDeedNo,
                 ownerName: ownerName,
                 syncState: syncState,

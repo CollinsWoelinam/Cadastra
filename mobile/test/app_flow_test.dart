@@ -1,12 +1,13 @@
 import 'dart:convert';
 
 import 'package:cadastra_field/app.dart';
+import 'package:cadastra_field/auth/session.dart';
+import 'package:cadastra_field/data/db.dart';
 import 'package:cadastra_field/services/api_client.dart';
 import 'package:cadastra_field/services/sync_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 
 import 'helpers.dart';
 
@@ -27,18 +28,36 @@ void main() {
         'overlap_geometry': {'type': 'Polygon', 'coordinates': [[[-0.17, 5.624], [-0.1699, 5.624], [-0.1699, 5.6241], [-0.17, 5.624]]]},
       },
     ];
-    final api = ApiClient('http://core', MockClient((req) async {
-      if (req.method == 'POST') {
-        uploaded = jsonDecode(req.body) as Map<String, dynamic>;
-        return http.Response(jsonEncode({'parcel': {'id': 'p-9', 'status': 'PENDING'}, 'conflicts': conflicts}), 201);
-      }
-      final body = req.url.path.endsWith('/conflicts') ? conflicts : {'id': 'p-9', 'status': 'PENDING'};
-      return http.Response(jsonEncode(body), 200);
-    }));
-    final services = AppServices(db: db, sync: SyncService(db, api), positionSource: () => gps, showBasemap: false);
+    final core = FakeCore()
+      ..handler = (req) async {
+        if (req.method == 'POST') {
+          uploaded = jsonDecode(req.body) as Map<String, dynamic>;
+          return http.Response(jsonEncode({'parcel': {'id': 'p-9', 'status': 'PENDING'}, 'conflicts': conflicts}), 201);
+        }
+        final body = req.url.path.endsWith('/conflicts') ? conflicts : {'id': 'p-9', 'status': 'PENDING'};
+        return http.Response(jsonEncode(body), 200);
+      };
+    final session = AuthSession('http://core', MemoryTokenStore(), core.client);
+    final services = AppServices(
+      db: db,
+      session: session,
+      sync: SyncService(db, ApiClient('http://core', session, core.client)),
+      positionSource: () => gps,
+      showBasemap: false,
+    );
 
     await tester.pumpWidget(CadastraApp(services: services));
     await tester.pump();
+
+    // Sign in
+    await tester.enterText(find.byKey(const Key('login-email')), 'kojo@test.gh');
+    await tester.enterText(find.byKey(const Key('login-password')), 'wrong');
+    await tester.tap(find.byKey(const Key('login-submit')));
+    await tester.pumpAndSettle();
+    expect(find.text('Incorrect email or password.'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('login-password')), 'right-password');
+    await tester.tap(find.byKey(const Key('login-submit')));
+    await tester.pumpAndSettle();
     expect(find.textContaining('No surveys yet'), findsOneWidget);
 
     // New survey
@@ -78,6 +97,20 @@ void main() {
     expect(find.text('Pending review — encroaches on approved land'), findsOneWidget);
     expect(find.text('GA/EL/1005 · Efua Addo'), findsOneWidget);
     expect(find.text('127.79 m²'), findsOneWidget);
+    expect(core.requests.where((r) => r.method == 'POST' && r.url.path == '/parcels').single.headers['Authorization'],
+        'Bearer access-1');
+
+    // Sign out returns to the sign-in screen; the survey stays on the device.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Sign out')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('login-submit')), findsOneWidget);
+    expect(await db.surveysIn(SyncState.synced, 'u-1'), hasLength(1));
 
     // Drift's stream-query cleanup runs on timers in the test's fake-async zone,
     // so advance fake time while the database closes.

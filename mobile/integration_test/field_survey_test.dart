@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cadastra_field/app.dart';
+import 'package:cadastra_field/auth/session.dart';
 import 'package:cadastra_field/config.dart';
 import 'package:cadastra_field/data/db.dart';
 import 'package:cadastra_field/location/position_source.dart';
@@ -13,7 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:latlong2/latlong.dart';
 
-/// Runs against a live Core Engine seeded with `python -m scripts.seed`.
+/// Runs against a live Core Engine seeded with `python -m scripts.seed` (which also
+/// creates the dev surveyor account used here).
 /// Walks a plot over the seeded approved parcels near GA/EL/2001 and checks that
 /// the server's encroachment verdict reaches the app.
 class PushedPositionSource implements PositionSource {
@@ -57,9 +59,17 @@ void main() {
     final runId = DateTime.now().millisecondsSinceEpoch;
     final db = AppDatabase(driftDatabase(name: 'it_$runId'));
     final gps = PushedPositionSource();
-    final sync = SyncService(db, ApiClient(apiBaseUrl));
-    await tester.pumpWidget(CadastraApp(services: AppServices(db: db, sync: sync, positionSource: () => gps)));
+    final session = AuthSession(apiBaseUrl, MemoryTokenStore());
+    final sync = SyncService(db, ApiClient(apiBaseUrl, session));
+    await tester.pumpWidget(
+        CadastraApp(services: AppServices(db: db, session: session, sync: sync, positionSource: () => gps)));
     await tester.pump();
+
+    // Dev account created by scripts.seed.
+    await tester.enterText(find.byKey(const Key('login-email')), 'surveyor@cadastra.local');
+    await tester.enterText(find.byKey(const Key('login-password')), 'cadastra-dev-password');
+    await tester.tap(find.byKey(const Key('login-submit')));
+    await _pumpUntil(tester, find.text('New survey'));
 
     final deed = 'GA/IT/${runId % 100000}';
     await tester.tap(find.text('New survey'));
@@ -102,7 +112,7 @@ void main() {
     await _pumpUntil(tester, find.textContaining('Overlaps an approved parcel'));
     await _checkpoint(tester, 'detail');
 
-    final survey = (await db.surveysIn(SyncState.synced)).single;
+    final survey = (await db.surveysIn(SyncState.synced, session.user!.id)).single;
     expect(survey.serverParcelId, isNotNull);
     expect(survey.titleDeedNo, deed);
   });

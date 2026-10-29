@@ -8,7 +8,9 @@ from .config import settings
 
 PARCEL_COLUMNS = """
     id, client_ref, title_deed_no, owner_name, ST_AsGeoJSON(boundary)::json AS boundary,
-    area_sqm, perimeter_m, survey_accuracy_m, status, review_note, reviewed_at, created_at
+    area_sqm, perimeter_m, survey_accuracy_m, status, review_note, reviewed_at, created_at,
+    submitted_by, (SELECT full_name FROM users WHERE users.id = submitted_by) AS submitted_by_name,
+    reviewed_by, (SELECT full_name FROM users WHERE users.id = reviewed_by) AS reviewed_by_name
 """
 
 # 'T********' = interiors intersect. Unlike ST_Overlaps this also catches one parcel
@@ -76,13 +78,13 @@ def get_parcel_by_client_ref(conn: Connection, client_ref: UUID) -> dict | None:
                         (client_ref,)).fetchone()
 
 
-def insert_parcel(conn: Connection, sub, survey_accuracy_m: float | None) -> dict:
+def insert_parcel(conn: Connection, sub, survey_accuracy_m: float | None, submitted_by: UUID) -> dict:
     row = conn.execute(f"""
-        INSERT INTO parcels (client_ref, title_deed_no, owner_name, boundary, survey_accuracy_m)
-        VALUES (%s, %s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), %s)
+        INSERT INTO parcels (client_ref, title_deed_no, owner_name, boundary, survey_accuracy_m, submitted_by)
+        VALUES (%s, %s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), %s, %s)
         RETURNING {PARCEL_COLUMNS}
     """, (sub.client_ref, sub.title_deed_no, sub.owner_name,
-          sub.boundary.model_dump_json(), survey_accuracy_m)).fetchone()
+          sub.boundary.model_dump_json(), survey_accuracy_m, submitted_by)).fetchone()
     with conn.cursor() as cur:
         cur.executemany("""
             INSERT INTO survey_points (parcel_id, seq, geom, accuracy_m, captured_at)
@@ -92,21 +94,23 @@ def insert_parcel(conn: Connection, sub, survey_accuracy_m: float | None) -> dic
     return row
 
 
-def set_status(conn: Connection, parcel_id: UUID, status: str, note: str | None) -> dict:
+def set_status(conn: Connection, parcel_id: UUID, status: str, note: str | None, reviewer: UUID) -> dict:
     return conn.execute(f"""
-        UPDATE parcels SET status = %s, review_note = %s, reviewed_at = now()
+        UPDATE parcels SET status = %s, review_note = %s, reviewed_at = now(), reviewed_by = %s
         WHERE id = %s RETURNING {PARCEL_COLUMNS}
-    """, (status, note, parcel_id)).fetchone()
+    """, (status, note, reviewer, parcel_id)).fetchone()
 
 
-def record_event(conn: Connection, parcel_id: UUID, event_type: str, detail: dict) -> None:
-    conn.execute("INSERT INTO parcel_events (parcel_id, event_type, detail) VALUES (%s, %s, %s)",
-                 (parcel_id, event_type, Jsonb(detail)))
+def record_event(conn: Connection, parcel_id: UUID, event_type: str, detail: dict, actor: UUID) -> None:
+    conn.execute("INSERT INTO parcel_events (parcel_id, event_type, detail, actor_id) VALUES (%s, %s, %s, %s)",
+                 (parcel_id, event_type, Jsonb(detail), actor))
 
 
 def list_events(conn: Connection, parcel_id: UUID) -> list[dict]:
     return conn.execute("""
-        SELECT event_type, detail, at FROM parcel_events WHERE parcel_id = %s ORDER BY at, id
+        SELECT e.event_type, e.detail, e.at, e.actor_id, u.full_name AS actor_name
+        FROM parcel_events e LEFT JOIN users u ON u.id = e.actor_id
+        WHERE e.parcel_id = %s ORDER BY e.at, e.id
     """, (parcel_id,)).fetchall()
 
 

@@ -41,7 +41,14 @@ export default function RegistryView() {
               <dt>Title deed</dt><dd><strong>{parcel.title_deed_no}</strong></dd>
               <dt>Owner</dt><dd>{parcel.owner_name}</dd>
               <dt>Status</dt><dd><span className={`badge ${parcel.status}`}>{parcel.status}</span></dd>
-              <dt>Submitted</dt><dd>{new Date(parcel.created_at).toLocaleString()}</dd>
+              <dt>Submitted</dt>
+              <dd>
+                {new Date(parcel.created_at).toLocaleString()}
+                {parcel.submitted_by_name && <div className="muted">by {parcel.submitted_by_name}</div>}
+              </dd>
+              {parcel.reviewed_by_name && (
+                <><dt>Reviewed by</dt><dd>{parcel.reviewed_by_name}</dd></>
+              )}
               {parcel.survey_accuracy_m != null && (
                 <><dt>Survey accuracy</dt><dd>±{parcel.survey_accuracy_m.toFixed(2)} m</dd></>
               )}

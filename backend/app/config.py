@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
@@ -6,6 +7,11 @@ class Settings(BaseSettings):
     # Overlaps smaller than this (m²) are not treated as conflicts. Default 0 flags
     # everything; raise it to absorb GNSS noise along shared boundaries.
     overlap_tolerance_sqm: float = 0.0
+
+    # HMAC key for access tokens. Required: there is deliberately no default.
+    jwt_secret: str = Field(min_length=32)
+    access_token_ttl_minutes: int = 15
+    refresh_token_ttl_days: int = 30
 
 
 settings = Settings()

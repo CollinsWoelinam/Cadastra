@@ -21,6 +21,10 @@ enum SyncState {
 class Surveys extends Table {
   /// Generated on the device; doubles as the upload's idempotency key (client_ref).
   TextColumn get id => text()();
+
+  /// Account that captured the survey. Devices can be shared, so each surveyor sees
+  /// and uploads only their own work.
+  TextColumn get ownerUserId => text().nullable()();
   TextColumn get titleDeedNo => text()();
   TextColumn get ownerName => text()();
   TextColumn get syncState => textEnum<SyncState>()();
@@ -62,23 +66,33 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'cadastra_field'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) await m.addColumn(surveys, surveys.ownerUserId);
+        },
         beforeOpen: (_) async => customStatement('PRAGMA foreign_keys = ON'),
       );
 
-  Stream<List<Survey>> watchSurveys() =>
-      (select(surveys)..orderBy([(s) => OrderingTerm.desc(s.createdAt)])).watch();
+  Stream<List<Survey>> watchSurveys(String ownerUserId) => (select(surveys)
+        ..where((s) => s.ownerUserId.equals(ownerUserId))
+        ..orderBy([(s) => OrderingTerm.desc(s.createdAt)]))
+      .watch();
+
+  /// Surveys captured before accounts existed belong to whoever signs in first.
+  Future<void> claimUnownedSurveys(String ownerUserId) =>
+      (update(surveys)..where((s) => s.ownerUserId.isNull())).write(SurveysCompanion(ownerUserId: Value(ownerUserId)));
 
   Stream<Survey> watchSurvey(String id) =>
       (select(surveys)..where((s) => s.id.equals(id))).watchSingle();
 
   Future<Survey> survey(String id) => (select(surveys)..where((s) => s.id.equals(id))).getSingle();
 
-  Future<List<Survey>> surveysIn(SyncState state) =>
-      (select(surveys)..where((s) => s.syncState.equalsValue(state))).get();
+  Future<List<Survey>> surveysIn(SyncState state, String ownerUserId) => (select(surveys)
+        ..where((s) => s.syncState.equalsValue(state) & s.ownerUserId.equals(ownerUserId)))
+      .get();
 
   Future<List<Node>> nodesOf(String surveyId) => (select(nodes)
         ..where((n) => n.surveyId.equals(surveyId))

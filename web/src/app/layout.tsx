@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SessionProvider, UserMenu } from "@/components/Session";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,14 +12,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
-        <header className="app-nav">
-          <Link href="/" className="brand">Cadastra</Link>
-          <nav>
-            <Link href="/">Registry map</Link>
-            <Link href="/inspector">Encroachment inspector</Link>
-          </nav>
-        </header>
-        <main>{children}</main>
+        <SessionProvider>
+          <header className="app-nav">
+            <Link href="/" className="brand">Cadastra</Link>
+            <nav>
+              <Link href="/">Registry map</Link>
+              <Link href="/inspector">Encroachment inspector</Link>
+            </nav>
+            <UserMenu />
+          </header>
+          <main>{children}</main>
+        </SessionProvider>
       </body>
     </html>
   );

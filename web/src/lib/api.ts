@@ -14,6 +14,10 @@ export interface Parcel {
   review_note: string | null;
   reviewed_at: string | null;
   created_at: string;
+  submitted_by: string | null;
+  submitted_by_name: string | null;
+  reviewed_by: string | null;
+  reviewed_by_name: string | null;
 }
 
 export interface Conflict {
@@ -30,6 +34,7 @@ export interface ParcelEvent {
   event_type: string;
   detail: Record<string, unknown>;
   at: string;
+  actor_name: string | null;
 }
 
 interface XY {
@@ -61,6 +66,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     cache: "no-store",
   });
   const body = await res.json().catch(() => null);
+  if (res.status === 401 && typeof window !== "undefined") {
+    // Session ended (expired, revoked, or account disabled).
+    // Full reload, not router.push: hidden routes stay mounted (Activity) and would keep the
+    // previous session's data in memory.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.assign(`/login?next=${encodeURIComponent(location.pathname + location.search)}`);
+  }
   if (!res.ok) throw new ApiError(res.status, body?.detail ?? body);
   return body as T;
 }

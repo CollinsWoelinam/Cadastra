@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import CadastraMap from "@/components/CadastraMap";
 import { AreaSummary } from "@/components/AreaSummary";
 import { api, ApiError, SQFT_PER_SQM, type Conflict, type Parcel } from "@/lib/api";
+import { canReview, useMe } from "@/components/Session";
 
 export default function Inspector() {
   const router = useRouter();
@@ -70,6 +71,8 @@ export default function Inspector() {
   }
 
   const blocking = conflicts.filter((c) => c.blocking);
+  const me = useMe();
+  const ownSubmission = !!me && parcel?.submitted_by === me.id;
 
   return (
     <div className="workspace">
@@ -92,6 +95,7 @@ export default function Inspector() {
         {parcel && (
           <>
             <h3>{parcel.title_deed_no} — {parcel.owner_name}</h3>
+            {parcel.submitted_by_name && <p className="muted">Surveyed by {parcel.submitted_by_name}</p>}
             <AreaSummary areaSqm={parcel.area_sqm} perimeterM={parcel.perimeter_m} />
 
             <h3>Boundary conflicts ({conflicts.length})</h3>
@@ -129,13 +133,24 @@ export default function Inspector() {
             )}
 
             <h3>Decision</h3>
-            <textarea placeholder="Review note (recorded in the audit trail)" value={note}
-                      onChange={(e) => setNote(e.target.value)} />
+            {!canReview(me) ? (
+              <p className="muted">Only reviewers can approve or reject surveys.</p>
+            ) : ownSubmission ? (
+              <p className="muted">You submitted this survey, so another reviewer must decide it.</p>
+            ) : (
+              <textarea placeholder="Review note (recorded in the audit trail)" value={note}
+                        onChange={(e) => setNote(e.target.value)} />
+            )}
             <div className="actions">
-              <button className="btn primary" disabled={busy || blocking.length > 0} onClick={() => review("approve")}>
-                Approve
-              </button>
-              <button className="btn danger" disabled={busy} onClick={() => review("reject")}>Reject</button>
+              {canReview(me) && !ownSubmission && (
+                <>
+                  <button className="btn primary" disabled={busy || blocking.length > 0}
+                          onClick={() => review("approve")}>
+                    Approve
+                  </button>
+                  <button className="btn danger" disabled={busy} onClick={() => review("reject")}>Reject</button>
+                </>
+              )}
               <Link className="btn" href={`/parcels/${parcel.id}/certificate`}>Survey plan</Link>
             </div>
           </>

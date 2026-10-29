@@ -1,33 +1,38 @@
-from typing import Annotated, Iterator
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from psycopg import Connection, errors
 
 from .. import geo, repo
-from ..db import pool
+from ..auth import Conn, current_user, require_role
 from ..schemas import (Parcel, ParcelSubmission, PolygonGeometry, ReviewDecision,
                        SubmissionResult, ValidationResult)
 
-router = APIRouter()
+# Any signed-in user may read; changes are gated per route by role.
+router = APIRouter(dependencies=[Depends(current_user)])
+Surveyor = require_role("SURVEYOR", "ADMIN")
+Reviewer = require_role("REVIEWER", "ADMIN")
 
 # All approvals take this lock so two overlapping PENDING parcels can't both be
 # approved by concurrent requests.
 APPROVAL_LOCK = 727002
 
 
-def get_conn() -> Iterator[Connection]:
-    with pool.connection() as conn:
-        yield conn
-
-
-Conn = Annotated[Connection, Depends(get_conn)]
-
-
 def _require_parcel(conn: Connection, parcel_id: UUID, for_update: bool = False) -> dict:
     parcel = repo.get_parcel(conn, parcel_id, for_update)
     if parcel is None:
         raise HTTPException(404, "parcel not found")
+    return parcel
+
+
+def _require_reviewable(conn: Connection, parcel_id: UUID, reviewer: dict) -> dict:
+    parcel = _require_parcel(conn, parcel_id, for_update=True)
+    if parcel["status"] != "PENDING":
+        raise HTTPException(409, f"parcel is {parcel['status']}, not PENDING")
+    # Separation of duties: nobody reviews a survey they submitted.
+    if parcel["submitted_by"] == reviewer["id"]:
+        raise HTTPException(403, "you cannot review a parcel you submitted")
     return parcel
 
 
@@ -47,8 +52,10 @@ def validate_boundary(geometry: PolygonGeometry, conn: Conn):
 
 
 @router.post("/parcels", response_model=SubmissionResult, status_code=201)
-def submit_parcel(sub: ParcelSubmission, conn: Conn, response: Response):
+def submit_parcel(sub: ParcelSubmission, conn: Conn, response: Response, user=Surveyor):
     if sub.client_ref and (existing := repo.get_parcel_by_client_ref(conn, sub.client_ref)):
+        if existing["submitted_by"] != user["id"]:
+            raise HTTPException(409, "client_ref already used by another submission")
         response.status_code = 200
         return {"parcel": existing,
                 "conflicts": repo.find_conflicts(conn, parcel_id=existing["id"])}
@@ -56,7 +63,7 @@ def submit_parcel(sub: ParcelSubmission, conn: Conn, response: Response):
     _require_valid(conn, sub.boundary)
     accuracies = [p.accuracy_m for p in sub.survey_points if p.accuracy_m is not None]
     try:
-        parcel = repo.insert_parcel(conn, sub, max(accuracies) if accuracies else None)
+        parcel = repo.insert_parcel(conn, sub, max(accuracies) if accuracies else None, user["id"])
     except errors.UniqueViolation as e:
         raise HTTPException(409, f"duplicate: {e.diag.constraint_name}") from e
 
@@ -64,7 +71,7 @@ def submit_parcel(sub: ParcelSubmission, conn: Conn, response: Response):
     repo.record_event(conn, parcel["id"], "SUBMITTED", {
         "conflicts": [{"parcel_id": str(c["parcel_id"]), "overlap_area_sqm": c["overlap_area_sqm"],
                        "blocking": c["blocking"]} for c in conflicts],
-    })
+    }, user["id"])
     return {"parcel": parcel, "conflicts": conflicts}
 
 
@@ -106,11 +113,9 @@ def get_conflicts(parcel_id: UUID, conn: Conn):
 
 
 @router.post("/parcels/{parcel_id}/approve", response_model=Parcel)
-def approve_parcel(parcel_id: UUID, decision: ReviewDecision, conn: Conn):
+def approve_parcel(parcel_id: UUID, decision: ReviewDecision, conn: Conn, user=Reviewer):
     conn.execute("SELECT pg_advisory_xact_lock(%s)", (APPROVAL_LOCK,))
-    parcel = _require_parcel(conn, parcel_id, for_update=True)
-    if parcel["status"] != "PENDING":
-        raise HTTPException(409, f"parcel is {parcel['status']}, not PENDING")
+    parcel = _require_reviewable(conn, parcel_id, user)
     blocking = repo.find_conflicts(conn, parcel_id=parcel_id, statuses=("APPROVED",))
     if blocking:
         raise HTTPException(409, {
@@ -118,18 +123,16 @@ def approve_parcel(parcel_id: UUID, decision: ReviewDecision, conn: Conn):
             "conflicts": [{"parcel_id": str(c["parcel_id"]), "title_deed_no": c["title_deed_no"],
                            "overlap_area_sqm": c["overlap_area_sqm"]} for c in blocking],
         })
-    updated = repo.set_status(conn, parcel_id, "APPROVED", decision.note)
-    repo.record_event(conn, parcel_id, "APPROVED", {"note": decision.note})
+    updated = repo.set_status(conn, parcel_id, "APPROVED", decision.note, user["id"])
+    repo.record_event(conn, parcel_id, "APPROVED", {"note": decision.note}, user["id"])
     return updated
 
 
 @router.post("/parcels/{parcel_id}/reject", response_model=Parcel)
-def reject_parcel(parcel_id: UUID, decision: ReviewDecision, conn: Conn):
-    parcel = _require_parcel(conn, parcel_id, for_update=True)
-    if parcel["status"] != "PENDING":
-        raise HTTPException(409, f"parcel is {parcel['status']}, not PENDING")
-    updated = repo.set_status(conn, parcel_id, "REJECTED", decision.note)
-    repo.record_event(conn, parcel_id, "REJECTED", {"note": decision.note})
+def reject_parcel(parcel_id: UUID, decision: ReviewDecision, conn: Conn, user=Reviewer):
+    _require_reviewable(conn, parcel_id, user)
+    updated = repo.set_status(conn, parcel_id, "REJECTED", decision.note, user["id"])
+    repo.record_event(conn, parcel_id, "REJECTED", {"note": decision.note}, user["id"])
     return updated
 
 

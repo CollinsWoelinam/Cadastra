@@ -80,8 +80,56 @@ class Parcel(BaseModel):
     review_note: str | None
     reviewed_at: datetime | None
     created_at: datetime
+    submitted_by: UUID | None
+    submitted_by_name: str | None
+    reviewed_by: UUID | None
+    reviewed_by_name: str | None
 
 
 class SubmissionResult(BaseModel):
     parcel: Parcel
     conflicts: list[Conflict]
+
+
+Role = Literal["SURVEYOR", "REVIEWER", "ADMIN"]
+
+
+class User(BaseModel):
+    id: UUID
+    email: str
+    full_name: str
+    role: Role
+    is_active: bool
+    created_at: datetime
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class TokenPair(BaseModel):
+    access_token: str
+    access_expires_at: datetime
+    refresh_token: str
+    refresh_expires_at: datetime
+    token_type: Literal["bearer"] = "bearer"
+    user: User
+
+
+class UserCreate(BaseModel):
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$", max_length=254)
+    full_name: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=12, max_length=128)
+    role: Role
+
+
+class UserUpdate(BaseModel):
+    full_name: str | None = Field(default=None, min_length=1, max_length=100)
+    role: Role | None = None
+    is_active: bool | None = None
+    password: str | None = Field(default=None, min_length=12, max_length=128)

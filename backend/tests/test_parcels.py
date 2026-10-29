@@ -73,19 +73,19 @@ def test_pending_overlap_is_non_blocking_warning(submit):
     assert [c["blocking"] for c in conflicts] == [False]
 
 
-def test_second_of_two_overlapping_pending_cannot_be_approved(client, submit):
+def test_second_of_two_overlapping_pending_cannot_be_approved(reviewer, submit):
     a = submit(square(0, 0, 100)).json()["parcel"]["id"]
     b = submit(square(50, 0, 100)).json()["parcel"]["id"]
-    assert client.post(f"/parcels/{a}/approve", json={}).status_code == 200
-    r = client.post(f"/parcels/{b}/approve", json={})
+    assert reviewer.post(f"/parcels/{a}/approve", json={}).status_code == 200
+    r = reviewer.post(f"/parcels/{b}/approve", json={})
     assert r.status_code == 409
     assert r.json()["detail"]["conflicts"][0]["parcel_id"] == a
 
 
-def test_review_only_from_pending(client, submit):
+def test_review_only_from_pending(client, reviewer, submit):
     pid = submit(square(0, 0, 10)).json()["parcel"]["id"]
-    assert client.post(f"/parcels/{pid}/reject", json={"note": "bad survey"}).status_code == 200
-    assert client.post(f"/parcels/{pid}/approve", json={}).status_code == 409
+    assert reviewer.post(f"/parcels/{pid}/reject", json={"note": "bad survey"}).status_code == 200
+    assert reviewer.post(f"/parcels/{pid}/approve", json={}).status_code == 409
     assert client.get(f"/parcels/{pid}").json()["review_note"] == "bad survey"
 
 
@@ -115,11 +115,12 @@ def test_survey_points_stored_and_accuracy_recorded(submit):
     assert n == 4
 
 
-def test_audit_trail_is_append_only(client, submit):
+def test_audit_trail_is_append_only(client, reviewer, submit):
     pid = submit(square(0, 0, 10)).json()["parcel"]["id"]
-    client.post(f"/parcels/{pid}/approve", json={"note": "ok"})
+    reviewer.post(f"/parcels/{pid}/approve", json={"note": "ok"})
     events = client.get(f"/parcels/{pid}/events").json()
     assert [e["event_type"] for e in events] == ["SUBMITTED", "APPROVED"]
+    assert [e["actor_name"] for e in events] == ["Surveyor", "Reviewer"]
     with psycopg.connect(TEST_URL) as conn, pytest.raises(psycopg.errors.RaiseException):
         conn.execute("DELETE FROM parcel_events")
 
