@@ -11,6 +11,8 @@ import '../geo/tiles.dart';
 import '../services/offline_maps.dart';
 import 'format.dart';
 import 'survey_map.dart';
+import 'theme.dart';
+import 'widgets.dart';
 
 /// Areas saved on the device for fieldwork without signal.
 class OfflineAreasScreen extends StatelessWidget {
@@ -21,64 +23,61 @@ class OfflineAreasScreen extends StatelessWidget {
     final services = Services.of(context);
     final offline = services.offlineMaps;
     return Scaffold(
-      appBar: AppBar(title: const Text('Offline maps')),
-      body: Column(
-        children: [
-          ListenableBuilder(
-            listenable: offline,
-            builder: (context, _) => offline.progress == null
-                ? const SizedBox.shrink()
-                : LinearProgressIndicator(
-                    value: offline.progress!.total == 0 ? null : offline.progress!.done / offline.progress!.total,
-                  ),
-          ),
-          Expanded(
-            child: StreamBuilder<List<OfflineArea>>(
-              stream: services.db.watchOfflineAreas(),
-              builder: (context, snapshot) {
-                final areas = snapshot.data ?? [];
-                return ListView(
-                  padding: const EdgeInsets.only(bottom: 96),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        offline.savesTiles
-                            ? 'Save the areas you will work in before leaving signal. Each saved area keeps the map '
-                                  'and the registered parcels on this device, so boundaries and overlap warnings work offline.'
-                            : 'Save the areas you will work in before leaving signal. Registered parcels are kept on this '
-                                  'device so overlap warnings work offline. Map imagery cannot be saved with the current '
-                                  'basemap provider; parcels and your boundary still show without it.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-                      ),
-                    ),
-                    if (snapshot.hasData && areas.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text('No saved areas yet.', textAlign: TextAlign.center),
-                      ),
-                    for (final a in areas) _AreaTile(a),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
+      body: SafeArea(
+        child: StreamBuilder<List<OfflineArea>>(
+          stream: services.db.watchOfflineAreas(),
+          builder: (context, snapshot) {
+            final areas = snapshot.data ?? [];
+            final bytes = areas.fold<int>(0, (sum, a) => sum + a.bytes);
+            return ListView(padding: const EdgeInsets.fromLTRB(16, 18, 16, 96), children: [
+              const Text('Offline maps', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Text(
+                offline.savesTiles
+                    ? 'Save the areas you will survey before leaving signal. Map, registered parcels and overlap '
+                        'warnings then work offline.'
+                    : 'Save the areas you will survey before leaving signal. Registered parcels and overlap warnings '
+                        'then work offline. Map imagery cannot be saved with the current basemap provider.',
+                style: const TextStyle(color: Palette.muted, height: 1.45),
+              ),
+              const SizedBox(height: 14),
+              if (areas.isNotEmpty)
+                Panel(
+                  child: Row(children: [
+                    const Text('Saved on this device', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text('${areas.length} area${areas.length == 1 ? '' : 's'} · ${formatBytes(bytes)}',
+                        style: const TextStyle(color: Palette.muted)),
+                  ]),
+                ),
+              const SizedBox(height: 10),
+              ListenableBuilder(listenable: offline, builder: (context, _) => _Saving(offline)),
+              if (snapshot.hasData && areas.isEmpty && !offline.downloading)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('No saved areas yet.', textAlign: TextAlign.center, style: TextStyle(color: Palette.muted)),
+                ),
+              for (final a in areas)
+                if (!(offline.downloading && !a.complete && a.name == offline.savingName))
+                  Padding(padding: const EdgeInsets.only(bottom: 10), child: _AreaCard(a)),
+            ]);
+          },
+        ),
       ),
       floatingActionButton: ListenableBuilder(
         listenable: offline,
         builder: (context, _) => FloatingActionButton.extended(
+          heroTag: 'save-area',
           onPressed: offline.downloading
               ? null
               : () async {
-                  final message = await Navigator.of(
-                    context,
-                  ).push<String>(MaterialPageRoute(builder: (_) => const SaveAreaScreen()));
+                  final message = await Navigator.of(context)
+                      .push<String>(MaterialPageRoute(builder: (_) => const SaveAreaScreen()));
                   if (message != null && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
                   }
                 },
-          icon: const Icon(Icons.download_for_offline),
+          icon: const Icon(Icons.add_location_alt_outlined),
           label: Text(offline.downloading ? 'Saving…' : 'Save an area'),
         ),
       ),
@@ -86,50 +85,114 @@ class OfflineAreasScreen extends StatelessWidget {
   }
 }
 
-class _AreaTile extends StatelessWidget {
+/// The area being saved right now, with progress and Cancel.
+class _Saving extends StatelessWidget {
+  final OfflineMaps offline;
+
+  const _Saving(this.offline);
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = offline.progress;
+    if (progress == null) return const SizedBox.shrink();
+    final fraction = progress.total == 0 ? null : progress.done / progress.total;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Panel(
+        borderColor: Palette.green,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            const _AreaIcon(Icons.downloading, Tone.green),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(offline.savingName ?? 'Saving', style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(progress.total == 0 ? 'Saving registered parcels…' : 'Saving map tiles',
+                    style: const TextStyle(fontSize: 13, color: Palette.muted)),
+              ]),
+            ),
+            OutlinedButton(onPressed: offline.cancel, child: const Text('Cancel')),
+          ]),
+          const SizedBox(height: 10),
+          ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: fraction, minHeight: 8)),
+          if (progress.total > 0) ...[
+            const SizedBox(height: 6),
+            Text('${formatCount(progress.done)} of ${formatCount(progress.total)} tiles',
+                style: const TextStyle(fontSize: 13, color: Palette.ink2)),
+          ],
+        ]),
+      ),
+    );
+  }
+}
+
+class _AreaIcon extends StatelessWidget {
+  final IconData icon;
+  final Tone tone;
+
+  const _AreaIcon(this.icon, this.tone);
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(color: tone.tint, borderRadius: BorderRadius.circular(12)),
+        child: Icon(icon, color: tone.text),
+      );
+}
+
+class _AreaCard extends StatelessWidget {
   final OfflineArea area;
 
-  const _AreaTile(this.area);
+  const _AreaCard(this.area);
 
   @override
   Widget build(BuildContext context) {
     final b = area.bounds;
     final width = PolygonMath.distance(LatLng(b.centre.latitude, b.west), LatLng(b.centre.latitude, b.east));
-    final height = PolygonMath.distance(LatLng(b.south, b.west), LatLng(b.north, b.west));
     final details = [
-      '${formatDistance(width)} × ${formatDistance(height)}',
+      formatDistance(width),
       '${formatCount(area.parcelCount)} parcels',
-      if (area.tileSource != null) '${formatCount(area.tileCount)} map tiles (${formatBytes(area.bytes)})',
-      'updated ${formatDate(area.updatedAt)}',
+      if (area.tileSource != null) '${formatCount(area.tileCount)} tiles (${formatBytes(area.bytes)})',
     ].join(' · ');
-    return ListTile(
-      leading: Icon(
-        area.complete ? Icons.offline_pin : Icons.error_outline,
-        color: area.complete ? Colors.green.shade700 : Colors.orange.shade800,
-      ),
-      title: Text(area.name),
-      subtitle: Text(area.complete ? details : '$details\nIncomplete — save this area again to fill the gaps.'),
-      isThreeLine: !area.complete,
-      trailing: PopupMenuButton<String>(
-        onSelected: (action) => action == 'refresh' ? _refresh(context) : _delete(context),
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: 'refresh', child: Text('Update registered parcels')),
-          PopupMenuItem(value: 'delete', child: Text('Delete')),
-        ],
-      ),
+    return Panel(
+      borderColor: area.complete ? Palette.line : Palette.amberLine,
+      padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
+      child: Row(children: [
+        area.complete ? const _AreaIcon(Icons.check, Tone.green) : const _AreaIcon(Icons.error_outline, Tone.amber),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(area.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(details, style: const TextStyle(fontSize: 13, color: Palette.muted)),
+            Text(
+              area.complete ? 'Updated ${formatDate(area.updatedAt)}' : 'Incomplete · save it again to fill the gaps',
+              style: TextStyle(
+                fontSize: 12,
+                color: area.complete ? Palette.muted : Palette.amberInk,
+                fontWeight: area.complete ? FontWeight.w400 : FontWeight.w600,
+              ),
+            ),
+          ]),
+        ),
+        PopupMenuButton<String>(
+          tooltip: 'More actions for ${area.name}',
+          onSelected: (action) => action == 'refresh' ? _refresh(context) : _delete(context),
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'refresh', child: Text('Update registered parcels')),
+            PopupMenuItem(value: 'delete', child: Text('Delete')),
+          ],
+        ),
+      ]),
     );
   }
 
   Future<void> _refresh(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     final n = await Services.read(context).offlineMaps.refreshParcels(area);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          n == null ? 'Could not reach the registry. Try again when online.' : 'Updated: $n registered parcels.',
-        ),
-      ),
-    );
+    messenger.showSnackBar(SnackBar(
+      content: Text(n == null ? 'Could not reach the registry. Try again when online.' : 'Updated: $n registered parcels.'),
+    ));
   }
 
   Future<void> _delete(BuildContext context) async {
@@ -137,10 +200,8 @@ class _AreaTile extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Delete ${area.name}?'),
-        content: const Text(
-          'Its saved map imagery is removed from this device. Registered parcels stay cached '
-          'until they are next refreshed.',
-        ),
+        content: const Text('Its saved map imagery is removed from this device. Registered parcels stay cached '
+            'until they are next refreshed.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),

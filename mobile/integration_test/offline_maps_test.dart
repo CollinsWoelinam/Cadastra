@@ -82,10 +82,9 @@ void main() {
     await tester.tap(find.byKey(const Key('login-submit')));
     await _pumpUntil(tester, find.text('New survey'));
 
-    // Account menu → Offline maps → Save an area.
-    await tester.tap(find.byTooltip('Account'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Offline maps'));
+    // Offline maps tab → Save an area.
+    await _checkpoint(tester, 'surveys');
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Offline maps')));
     await tester.pumpAndSettle();
     expect(find.text('No saved areas yet.'), findsOneWidget);
     await tester.tap(find.text('Save an area'));
@@ -116,7 +115,7 @@ void main() {
     print('SAVED tiles=${saved.tileCount} bytes=${saved.bytes} parcels=${saved.parcelCount}');
 
     // Survey inside the saved area: the map comes from disk and the parcels from the cache.
-    await tester.pageBack();
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Surveys')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('New survey'));
     await tester.pumpAndSettle();
@@ -128,8 +127,10 @@ void main() {
     await _pumpUntil(tester, find.byKey(const Key('neighbours')));
     await _checkpoint(tester, 'capture-in-saved-area');
     // Leave the draft; it stays on the device of this test-only database.
-    await tester.pageBack();
+    await tester.tap(find.byTooltip('Back to surveys'));
     await tester.pumpAndSettle();
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Account')));
+    await _checkpoint(tester, 'account');
     await tester.pumpWidget(const SizedBox());
     await db.close();
     tileDir.deleteSync(recursive: true);

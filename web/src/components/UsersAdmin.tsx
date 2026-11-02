@@ -2,20 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { api, ApiError, type Role, type User } from "@/lib/api";
+import { formatWhen, initials } from "@/lib/format";
 import { generatePassword } from "@/lib/password";
 import { useMe } from "@/components/Session";
+import { CheckCircleIcon, PlusIcon, SearchIcon, WarningIcon } from "@/components/Icons";
 
-const ROLES: { value: Role; label: string; can: string }[] = [
-  { value: "SURVEYOR", label: "Surveyor", can: "submits surveys from the field app" },
-  { value: "REVIEWER", label: "Reviewer", can: "approves or rejects surveys" },
-  { value: "ADMIN", label: "Administrator", can: "everything, including accounts" },
+const ROLES: { value: Role; label: string; plural: string; can: string }[] = [
+  { value: "SURVEYOR", label: "Surveyor", plural: "Surveyors", can: "submits surveys from the field app" },
+  { value: "REVIEWER", label: "Reviewer", plural: "Reviewers", can: "approves or rejects surveys" },
+  { value: "ADMIN", label: "Administrator", plural: "Admins", can: "everything, including accounts" },
 ];
 
+type Filter = "ALL" | Role | "INACTIVE";
 type Notice = { ok: boolean; text: string; password?: string };
-
-function formatDate(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Never";
-}
 
 export default function UsersAdmin() {
   const me = useMe();
@@ -25,6 +24,7 @@ export default function UsersAdmin() {
   const [creating, setCreating] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("ALL");
 
   useEffect(() => {
     if (isAdmin) api.users().then(setUsers).catch((e) => setNotice({ ok: false, text: String(e.message ?? e) }));
@@ -32,7 +32,7 @@ export default function UsersAdmin() {
 
   if (!me) return null;
   if (!isAdmin) {
-    return <div className="page"><h1>Accounts</h1><p className="muted">Only administrators can manage accounts.</p></div>;
+    return <div className="page"><div className="page-head"><h1>Accounts</h1></div><p className="muted">Only administrators can manage accounts.</p></div>;
   }
 
   function replace(user: User) {
@@ -67,20 +67,37 @@ export default function UsersAdmin() {
   function resetPassword(user: User) {
     if (!window.confirm(`Reset ${user.full_name}'s password? Their current sessions will end.`)) return;
     const password = generatePassword();
-    update(user, { password }, { ok: true, text: `New password for ${user.full_name}:`, password });
+    update(user, { password }, { ok: true, text: `New password for ${user.full_name}.`, password });
   }
 
+  const all = users ?? [];
+  const counts: Record<Filter, number> = {
+    ALL: all.length,
+    SURVEYOR: all.filter((u) => u.is_active && u.role === "SURVEYOR").length,
+    REVIEWER: all.filter((u) => u.is_active && u.role === "REVIEWER").length,
+    ADMIN: all.filter((u) => u.is_active && u.role === "ADMIN").length,
+    INACTIVE: all.filter((u) => !u.is_active).length,
+  };
+  const tabs: { key: Filter; label: string }[] = [
+    { key: "ALL", label: "All" },
+    ...ROLES.map((r) => ({ key: r.value as Filter, label: r.plural })),
+    { key: "INACTIVE", label: "Deactivated" },
+  ];
   const q = query.trim().toLowerCase();
-  const shown = (users ?? [])
+  const shown = all
+    .filter((u) => filter === "ALL" || (filter === "INACTIVE" ? !u.is_active : u.is_active && u.role === filter))
     .filter((u) => !q || u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
     .sort((a, b) => Number(b.is_active) - Number(a.is_active));
 
   return (
     <div className="page">
       <div className="page-head">
-        <h1>Accounts</h1>
-        <button className="btn primary" onClick={() => { setCreating(true); setNotice(null); }} disabled={creating}>
-          New account
+        <div>
+          <h1>Accounts</h1>
+          <p>Who can survey, review and administer the registry.</p>
+        </div>
+        <button type="button" className="btn btn-primary btn-lg" onClick={() => { setCreating(true); setNotice(null); }} disabled={creating}>
+          <PlusIcon color="#fff" />New account
         </button>
       </div>
 
@@ -92,22 +109,31 @@ export default function UsersAdmin() {
           onCreated={(user, password) => {
             setUsers((list) => [...(list ?? []), { ...user, last_active_at: null }]);
             setCreating(false);
-            setNotice({ ok: true, text: `Account created for ${user.full_name} (${user.email}). Password:`, password });
+            setNotice({ ok: true, text: `Account created for ${user.full_name}.`, password });
           }}
         />
       )}
 
       <div className="toolbar">
-        <input type="search" placeholder="Search by name or email" value={query} onChange={(e) => setQuery(e.target.value)}
-               aria-label="Search accounts" />
-        {users && <span className="muted">{users.filter((u) => u.is_active).length} active · {users.length} total</span>}
+        <div className="tabs" role="tablist" aria-label="Filter accounts">
+          {tabs.map((t) => (
+            <button key={t.key} type="button" role="tab" className="tab" aria-selected={filter === t.key} onClick={() => setFilter(t.key)}>
+              {t.label} · {counts[t.key]}
+            </button>
+          ))}
+        </div>
+        <label className="search-box">
+          <SearchIcon color="#5A6862" />
+          <span className="visually-hidden">Search accounts</span>
+          <input type="search" placeholder="Search name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
       </div>
 
       {users === null ? <p className="muted">Loading…</p> : (
-        <div className="table-scroll">
-          <table className="data accounts">
+        <div className="table-wrap">
+          <table className="table">
             <thead>
-              <tr><th>Name</th><th>Role</th><th>Status</th><th>Last active</th><th></th></tr>
+              <tr><th scope="col">Person</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Last active</th><th scope="col"><span className="visually-hidden">Actions</span></th></tr>
             </thead>
             <tbody>
               {shown.map((u) => {
@@ -116,41 +142,57 @@ export default function UsersAdmin() {
                 return (
                   <tr key={u.id} className={u.is_active ? "" : "inactive"}>
                     <td>
-                      <div className="name">{u.full_name}{self && <span className="muted"> (you)</span>}</div>
-                      <div className="muted">{u.email}</div>
+                      <div className="person">
+                        <span className={`avatar lg ${u.is_active ? u.role : "inactive"}`}>{initials(u.full_name)}</span>
+                        <span>
+                          <span className="person-name">{u.full_name}{self && <span className="muted" style={{ fontWeight: 400 }}>(you)</span>}
+                            {u.is_active && !u.last_active_at && <span className="pill pill-new">New</span>}</span>
+                          <span className="person-email">{u.email}</span>
+                        </span>
+                      </div>
                     </td>
                     <td data-label="Role">
-                      <select value={u.role} disabled={self || busy || !u.is_active} aria-label={`Role for ${u.full_name}`}
-                              title={self ? "You cannot change your own role" : undefined}
-                              onChange={(e) => changeRole(u, e.target.value as Role)}>
-                        {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-                      </select>
+                      {u.is_active ? (
+                        <select className="select" value={u.role} disabled={self || busy} aria-label={`Role for ${u.full_name}`}
+                                title={self ? "You cannot change your own role" : undefined}
+                                onChange={(e) => changeRole(u, e.target.value as Role)}>
+                          {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                        </select>
+                      ) : <span className="muted">{ROLES.find((r) => r.value === u.role)?.label}</span>}
                     </td>
-                    <td data-label="Status"><span className={`badge ${u.is_active ? "active" : "disabled"}`}>{u.is_active ? "Active" : "Deactivated"}</span></td>
-                    <td className="muted" data-label="Last active">{formatDate(u.last_active_at)}</td>
+                    <td data-label="Status">
+                      <span className="status-text" style={{ color: u.is_active ? "var(--green-ink)" : "var(--muted)" }}>
+                        <span className={`dot ${u.is_active ? "dot-green" : ""}`} />{u.is_active ? "Active" : "Deactivated"}
+                      </span>
+                    </td>
+                    <td data-label="Last active" style={{ color: "var(--ink-2)" }}>
+                      {self ? "Now" : u.last_active_at ? formatWhen(u.last_active_at) : "Never signed in"}
+                    </td>
                     <td>
                       <div className="row-actions">
-                      {u.is_active && (
-                        <button className="btn small" disabled={busy} onClick={() => resetPassword(u)}>Reset password</button>
-                      )}
-                      <button className={`btn small ${u.is_active ? "danger-outline" : ""}`} disabled={self || busy}
-                              title={self ? "You cannot deactivate yourself" : undefined} onClick={() => toggleActive(u)}>
-                        {u.is_active ? "Deactivate" : "Reactivate"}
-                      </button>
+                        {self ? <span className="muted">Your own role and access are locked</span> : (
+                          <>
+                            {u.is_active && <button type="button" className="btn btn-sm" disabled={busy} onClick={() => resetPassword(u)}>Reset password</button>}
+                            <button type="button" className={`btn btn-sm ${u.is_active ? "btn-danger-outline" : "btn-green-outline"}`}
+                                    disabled={busy} onClick={() => toggleActive(u)}>
+                              {u.is_active ? "Deactivate" : "Reactivate"}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              {shown.length === 0 && <tr><td colSpan={5} className="muted">No accounts match “{query}”.</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={5} className="muted">No accounts match.</td></tr>}
             </tbody>
           </table>
         </div>
       )}
 
-      <p className="muted footnote">
-        {ROLES.map((r) => <span key={r.value}><strong>{r.label}</strong> {r.can}. </span>)}
-        Nobody can review a survey they submitted.
+      <p className="footnote">
+        <strong>Surveyors</strong> submit boundaries from the field app. <strong>Reviewers</strong> approve or reject
+        them. <strong>Administrators</strong> can also manage accounts. Nobody can review a survey they submitted.
       </p>
     </div>
   );
@@ -159,23 +201,21 @@ export default function UsersAdmin() {
 function NoticeBox({ notice, onClose }: { notice: Notice; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className={`alert ${notice.ok ? "ok" : ""} notice`} role="status">
-      <div>
-        {notice.text}
-        {notice.password && (
-          <>
-            {" "}<code className="secret">{notice.password}</code>{" "}
-            <button className="link-btn dark" onClick={() => navigator.clipboard.writeText(notice.password!).then(() => setCopied(true))}>
-              {copied ? "Copied" : "Copy"}
-            </button>
-            <div className="hint">
-              Give it to them privately; it will not be shown again. They should change it under My account after
-              signing in.
-            </div>
-          </>
-        )}
+    <div className={`notice ${notice.ok ? "" : "error"}`} role="status">
+      {notice.ok ? <CheckCircleIcon size={22} color="#0B6E4F" /> : <WarningIcon size={22} color="#B42318" />}
+      <div className="notice-text">
+        <strong>{notice.text}</strong>
+        {notice.password && " Give it to them privately; it will not be shown again. They should change it under My account after signing in."}
       </div>
-      <button className="close" aria-label="Dismiss" onClick={onClose}>×</button>
+      {notice.password && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <code className="secret">{notice.password}</code>
+          <button type="button" className="btn btn-sm btn-green-outline" onClick={() => navigator.clipboard.writeText(notice.password!).then(() => setCopied(true))}>
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      )}
+      <button type="button" className="notice-close" aria-label="Dismiss" onClick={onClose}>×</button>
     </div>
   );
 }
@@ -205,25 +245,27 @@ function NewAccount({ onCancel, onCreated }: { onCancel: () => void; onCreated: 
   }
 
   return (
-    <form className="card form-grid" onSubmit={submit}>
+    <form className="card form-card" onSubmit={submit}>
       <h2>New account</h2>
-      <label>Full name<input name="full_name" required maxLength={100} autoFocus /></label>
-      <label>Email<input name="email" type="email" required maxLength={254} autoComplete="off" /></label>
-      <label>Role
-        <select name="role" defaultValue="SURVEYOR">
+      <div className="field"><label htmlFor="na-name">Full name</label><input id="na-name" name="full_name" className="input" required maxLength={100} autoFocus /></div>
+      <div className="field"><label htmlFor="na-email">Email</label><input id="na-email" name="email" type="email" className="input" required maxLength={254} autoComplete="off" /></div>
+      <div className="field">
+        <label htmlFor="na-role">Role</label>
+        <select id="na-role" name="role" className="select" defaultValue="SURVEYOR" style={{ minHeight: 46, fontSize: 15 }}>
           {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label} — {r.can}</option>)}
         </select>
-      </label>
-      <label>Initial password
+      </div>
+      <div className="field">
+        <label htmlFor="na-pw">Initial password</label>
         <span className="with-button">
-          <input value={password} onChange={(e) => setPassword(e.target.value)} minLength={12} maxLength={128} required
-                 autoComplete="new-password" spellCheck={false} />
+          <input id="na-pw" className="input" value={password} onChange={(e) => setPassword(e.target.value)} minLength={12} maxLength={128}
+                 required autoComplete="new-password" spellCheck={false} />
           <button type="button" className="btn" onClick={() => setPassword(generatePassword())}>Generate</button>
         </span>
-      </label>
-      {error && <div className="alert">{error}</div>}
-      <div className="actions">
-        <button className="btn primary" type="submit" disabled={busy}>{busy ? "Creating…" : "Create account"}</button>
+      </div>
+      {error && <div className="alert" role="alert"><WarningIcon color="#B42318" /><span>{error}</span></div>}
+      <div className="btn-row" style={{ maxWidth: 360 }}>
+        <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Creating…" : "Create account"}</button>
         <button className="btn" type="button" onClick={onCancel}>Cancel</button>
       </div>
     </form>

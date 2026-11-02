@@ -5,11 +5,28 @@ import 'package:latlong2/latlong.dart';
 
 import '../data/db.dart';
 import '../geo/polygon_math.dart';
+import 'widgets.dart';
 
 String formatArea(double sqm) =>
     '${sqm.toStringAsFixed(1)} m² · ${(sqm / sqmPerAcre).toStringAsFixed(3)} ac';
 
 String formatLength(double m) => '${m.toStringAsFixed(1)} m';
+
+/// "1,077.6 m²"
+String formatSqm(double sqm) {
+  final whole = sqm.truncate();
+  return '${formatCount(whole)}.${((sqm - whole) * 10).round().clamp(0, 9)} m²';
+}
+
+/// "09:12", "Yesterday", "28 Oct".
+String formatWhen(DateTime t, [DateTime? now]) {
+  now ??= DateTime.now();
+  final days = DateTime(now.year, now.month, now.day).difference(DateTime(t.year, t.month, t.day)).inDays;
+  if (days == 0) return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  if (days == 1) return 'Yesterday';
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return '${t.day} ${months[t.month - 1]}';
+}
 
 String formatDistance(double m) => m < 1000 ? '${m.round()} m' : '${(m / 1000).toStringAsFixed(m < 10000 ? 1 : 0)} km';
 
@@ -54,16 +71,31 @@ class Conflict {
       : [for (final c in jsonDecode(s.conflictsJson!) as List) Conflict.fromJson(c as Map<String, dynamic>)];
 }
 
-/// One-line status and colour for a survey, as shown in lists and headers.
-(String, Color) surveyStatus(Survey s, List<Conflict> conflicts) => switch (s.syncState) {
-      SyncState.draft => ('Draft — capture in progress', Colors.blueGrey),
-      SyncState.queued => ('Waiting to upload', Colors.orange),
-      SyncState.failed => ('Refused: ${s.lastError ?? 'unknown error'}', Colors.red),
+typedef SurveyStatus = ({String label, String short, Tone tone, IconData icon});
+
+/// How a survey is described in lists and headers: a line, a pill label, a colour and an icon.
+SurveyStatus surveyStatus(Survey s, List<Conflict> conflicts) => switch (s.syncState) {
+      SyncState.draft => (label: 'Capturing · tap to continue', short: 'Draft', tone: Tone.blue, icon: Icons.polyline_outlined),
+      SyncState.queued =>
+        (label: 'Finished · waiting to upload', short: 'Waiting to upload', tone: Tone.neutral, icon: Icons.cloud_upload_outlined),
+      SyncState.failed =>
+        (label: 'Refused: ${s.lastError ?? 'unknown error'}', short: 'Refused', tone: Tone.red, icon: Icons.error_outline),
       SyncState.synced => switch (s.serverStatus) {
-          'APPROVED' => ('Approved', Colors.green),
-          'REJECTED' => ('Rejected by registry', Colors.grey),
-          _ when conflicts.any((c) => c.blocking) => ('Pending review — encroaches on approved land', Colors.red),
-          _ when conflicts.isNotEmpty => ('Pending review — overlaps another claim', Colors.orange),
-          _ => ('Pending review', Colors.amber.shade800),
+          'APPROVED' =>
+            (label: 'Approved by the registry', short: 'Approved', tone: Tone.green, icon: Icons.check_circle_outline),
+          'REJECTED' => (label: 'Rejected by the registry', short: 'Rejected', tone: Tone.neutral, icon: Icons.block),
+          _ when conflicts.any((c) => c.blocking) => (
+              label: 'Pending review · encroaches on approved land',
+              short: 'Pending review',
+              tone: Tone.red,
+              icon: Icons.warning_amber_rounded
+            ),
+          _ when conflicts.isNotEmpty => (
+              label: 'Pending review · overlaps another claim',
+              short: 'Pending review',
+              tone: Tone.amber,
+              icon: Icons.warning_amber_rounded
+            ),
+          _ => (label: 'Pending review', short: 'Pending review', tone: Tone.amber, icon: Icons.hourglass_top),
         },
     };

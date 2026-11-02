@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../app.dart';
+import 'theme.dart';
+import 'widgets.dart';
 
 /// Sign-in form. As the app's home it gates first use; pushed as a route it
 /// renews an expired session and pops on success.
@@ -59,14 +61,21 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Form(
               key: _form,
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Text('Cadastra Field', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-                const SizedBox(height: 8),
-                const Text('Sign in with your surveyor account.', textAlign: TextAlign.center),
+                const Row(children: [
+                  _BrandMark(),
+                  SizedBox(width: 10),
+                  Text('Cadastra Field', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                ]),
                 const SizedBox(height: 32),
+                const Text('Sign in', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                const Text('Use the surveyor account your registry administrator gave you.',
+                    style: TextStyle(color: Palette.muted, fontSize: 15)),
+                const SizedBox(height: 28),
                 TextFormField(
                   key: const Key('login-email'),
                   controller: _email,
-                  decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(labelText: 'Email'),
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: const [AutofillHints.username],
                   autocorrect: false,
@@ -76,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   key: const Key('login-password'),
                   controller: _password,
-                  decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(labelText: 'Password'),
                   obscureText: true,
                   autofillHints: const [AutofillHints.password],
                   onFieldSubmitted: (_) => _submit(),
@@ -85,16 +94,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
-                    child: Text(_error!, key: const Key('login-error'), style: const TextStyle(color: Colors.red)),
+                    child: Callout(
+                      icon: _error!.startsWith('Too many') ? Icons.schedule : Icons.error_outline,
+                      tone: _error!.startsWith('Too many') ? Tone.amber : Tone.red,
+                      child: Text(_error!, key: const Key('login-error')),
+                    ),
                   ),
                 const SizedBox(height: 24),
                 FilledButton(
                   key: const Key('login-submit'),
                   onPressed: _busy ? null : _submit,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(_busy ? 'Signing in…' : 'Sign in'),
-                  ),
+                  child: Text(_busy ? 'Signing in…' : 'Sign in'),
                 ),
               ]),
             ),
@@ -103,4 +113,28 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+class _BrandMark extends StatelessWidget {
+  const _BrandMark();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 32,
+        height: 32,
+        child: Stack(alignment: Alignment.center, children: [
+          Transform.rotate(
+            angle: 0.785398,
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                border: Border.all(color: Palette.green, width: 2.4),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+          Container(width: 8, height: 8, decoration: const BoxDecoration(color: Palette.gold, shape: BoxShape.circle)),
+        ]),
+      );
 }

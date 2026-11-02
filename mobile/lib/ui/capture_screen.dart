@@ -13,6 +13,8 @@ import '../geo/tiles.dart';
 import '../services/capture_controller.dart';
 import 'format.dart';
 import 'survey_map.dart';
+import 'theme.dart';
+import 'widgets.dart';
 
 class CaptureScreen extends StatefulWidget {
   final String surveyId;
@@ -151,10 +153,6 @@ class _CaptureScreenState extends State<CaptureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_survey?.titleDeedNo ?? 'Survey'),
-        actions: [IconButton(tooltip: 'Capture settings', icon: const Icon(Icons.tune), onPressed: _settings)],
-      ),
       body: ListenableBuilder(
         listenable: capture,
         builder: (context, _) {
@@ -178,72 +176,115 @@ class _CaptureScreenState extends State<CaptureScreen> {
               Positioned(
                 left: 12,
                 right: 12,
-                top: 12,
-                child: _StatusPanel(
-                  capture,
-                  encroachments: encroachments,
-                  neighbourNote: _neighbourNote,
-                  collapsed: _panelCollapsed,
-                  onToggle: () => setState(() => _panelCollapsed = !_panelCollapsed),
+                top: MediaQuery.paddingOf(context).top + 8,
+                child: Column(
+                  children: [
+                    _TopBar(survey: _survey, onSettings: _settings),
+                    const SizedBox(height: 10),
+                    _StatusPanel(
+                      capture,
+                      encroachments: encroachments,
+                      neighbourNote: _neighbourNote,
+                      collapsed: _panelCollapsed,
+                      onToggle: () => setState(() => _panelCollapsed = !_panelCollapsed),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                right: 14,
+                bottom: 14,
+                child: Material(
+                  color: Colors.white,
+                  elevation: 4,
+                  shadowColor: Colors.black26,
+                  borderRadius: BorderRadius.circular(14),
+                  child: IconButton(
+                    tooltip: 'Follow my position',
+                    iconSize: 24,
+                    padding: const EdgeInsets.all(12),
+                    onPressed: () => setState(() => _follow = true),
+                    icon: Icon(_follow ? Icons.my_location : Icons.location_searching, color: Palette.green),
+                  ),
                 ),
               ),
             ],
           );
         },
       ),
-      // As Scaffold slots (not Stack children) these keep snackbars from covering them.
-      floatingActionButton: FloatingActionButton.small(
-        heroTag: 'follow',
-        tooltip: 'Follow my position',
-        onPressed: () => setState(() => _follow = true),
-        child: Icon(_follow ? Icons.my_location : Icons.location_searching),
-      ),
+      // A Scaffold slot (not a Stack child), so snackbars float above the controls.
       bottomNavigationBar: ListenableBuilder(listenable: capture, builder: (context, _) => _controls(context)),
     );
   }
 
   Widget _controls(BuildContext context) {
     final walkMode = capture.mode == CaptureMode.walk;
-    return Material(
-      elevation: 8,
+    final ready = capture.locationProblem == null;
+    final (title, hint) = walkMode
+        ? (
+            capture.walking ? 'Pause walking' : 'Start walking the boundary',
+            'Drops a corner every ${capture.walkSpacingM.round()} m',
+          )
+        : (
+            capture.averaging ? 'Hold still — averaging…' : 'Record corner ${capture.nodes.length + 1}',
+            'Hold the pole still · averages 3 s',
+          );
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        boxShadow: [BoxShadow(color: Color(0x240F1B17), blurRadius: 24, offset: Offset(0, -6))],
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Palette.lineStrong, borderRadius: BorderRadius.circular(99)),
+                ),
+              ),
+              const SizedBox(height: 12),
               SegmentedButton<CaptureMode>(
+                showSelectedIcon: false,
                 segments: const [
-                  ButtonSegment(value: CaptureMode.corner, icon: Icon(Icons.place), label: Text('Corners')),
+                  ButtonSegment(value: CaptureMode.corner, icon: Icon(Icons.place_outlined), label: Text('Corners')),
                   ButtonSegment(value: CaptureMode.walk, icon: Icon(Icons.directions_walk), label: Text('Walk')),
                 ],
                 selected: {capture.mode},
                 onSelectionChanged: (s) => capture.setMode(s.single),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: walkMode
-                    ? FilledButton.icon(
-                        key: const Key('walk'),
-                        onPressed: capture.locationProblem == null ? capture.toggleWalking : null,
-                        icon: Icon(capture.walking ? Icons.pause : Icons.play_arrow),
-                        label: Text(capture.walking ? 'Pause walking' : 'Start walking the boundary'),
-                      )
-                    : FilledButton.icon(
-                        key: const Key('corner'),
-                        onPressed: capture.locationProblem == null && !capture.averaging ? _recordCorner : null,
-                        icon: capture.averaging
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.add_location),
-                        label: Text(
-                          capture.averaging ? 'Hold still — averaging…' : 'Record corner ${capture.nodes.length + 1}',
-                        ),
+                height: 64,
+                child: FilledButton(
+                  key: Key(walkMode ? 'walk' : 'corner'),
+                  onPressed: !ready
+                      ? null
+                      : walkMode
+                      ? capture.toggleWalking
+                      : capture.averaging
+                      ? null
+                      : _recordCorner,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text(
+                        hint,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Color(0xFFCFE8DD)),
                       ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -253,10 +294,15 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       label: const Text('Undo'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: FilledButton.tonalIcon(
                       key: const Key('finish'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        backgroundColor: Palette.greenTint,
+                        foregroundColor: Palette.greenInk,
+                      ),
                       onPressed: capture.nodes.length >= 3 ? _finish : null,
                       icon: const Icon(Icons.check),
                       label: const Text('Finish'),
@@ -316,6 +362,43 @@ class _CaptureScreenState extends State<CaptureScreen> {
   );
 }
 
+class _TopBar extends StatelessWidget {
+  final Survey? survey;
+  final VoidCallback onSettings;
+
+  const _TopBar({required this.survey, required this.onSettings});
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    elevation: 4,
+    shadowColor: Colors.black26,
+    borderRadius: BorderRadius.circular(16),
+    child: Padding(
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Back to surveys',
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(survey?.titleDeedNo ?? 'Survey', style: mono.copyWith(fontSize: 15)),
+                if (survey != null) Text(survey!.ownerName, style: const TextStyle(fontSize: 12, color: Palette.muted)),
+              ],
+            ),
+          ),
+          IconButton(tooltip: 'Capture settings', icon: const Icon(Icons.tune), onPressed: onSettings),
+        ],
+      ),
+    ),
+  );
+}
+
 class _StatusPanel extends StatelessWidget {
   final CaptureController capture;
   final List<Encroachment> encroachments;
@@ -341,41 +424,61 @@ class _StatusPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fix = capture.lastFix;
-    final (gpsText, gpsColor) = switch (fix) {
-      _ when capture.locationProblem != null => (capture.locationProblem!, Colors.red),
-      null => ('Waiting for GPS…', Colors.grey),
+    final (gpsText, tone) = switch (fix) {
+      _ when capture.locationProblem != null => (capture.locationProblem!, Tone.red),
+      null => ('Waiting for GPS…', Tone.neutral),
       _ when !capture.isUsable(fix) => (
         'GPS ±${fix.accuracyM.toStringAsFixed(1)} m — too poor, not recording',
-        Colors.red,
+        Tone.red,
       ),
-      _ when fix.accuracyM <= 1 => ('GPS ±${fix.accuracyM.toStringAsFixed(2)} m', Colors.green),
-      _ => ('GPS ±${fix.accuracyM.toStringAsFixed(1)} m', Colors.orange.shade800),
+      _ when fix.accuracyM <= 1 => ('GPS ±${fix.accuracyM.toStringAsFixed(2)} m', Tone.green),
+      _ => ('GPS ±${fix.accuracyM.toStringAsFixed(1)} m', Tone.amber),
     };
     final gpsRow = Row(
       children: [
-        Icon(Icons.satellite_alt, size: 18, color: gpsColor),
-        const SizedBox(width: 6),
         Expanded(
-          child: Text(
-            gpsText,
-            key: const Key('gps'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: gpsColor, fontWeight: FontWeight.w600),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(color: tone.tint, borderRadius: BorderRadius.circular(99)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.satellite_alt, size: 14, color: tone.text),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      gpsText,
+                      key: const Key('gps'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: tone.text, fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        if (capture.walking) const Chip(label: Text('Recording'), visualDensity: VisualDensity.compact),
-        Icon(collapsed ? Icons.expand_more : Icons.expand_less, color: Colors.black45),
+        const SizedBox(width: 8),
+        if (capture.walking) const StatusPill('Recording', Tone.blue),
+        const SizedBox(width: 4),
+        Icon(collapsed ? Icons.expand_more : Icons.expand_less, color: Palette.muted),
       ],
     );
-    return Card(
+    return Material(
+      color: Colors.white,
+      elevation: 4,
+      shadowColor: Colors.black26,
+      borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         key: const Key('status-panel'),
         onTap: onToggle,
         child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: collapsed ? _summary(gpsRow) : _details(context, gpsRow),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: collapsed ? _summary(gpsRow) : _details(gpsRow),
         ),
       ),
     );
@@ -388,7 +491,7 @@ class _StatusPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         gpsRow,
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text.rich(
           TextSpan(
             children: [
@@ -397,14 +500,14 @@ class _StatusPanel extends StatelessWidget {
                 TextSpan(
                   text: ' · ${encroachments.length} overlap${encroachments.length == 1 ? '' : 's'}',
                   style: TextStyle(
-                    color: blocking > 0 ? Colors.red.shade700 : Colors.orange.shade900,
-                    fontWeight: FontWeight.w600,
+                    color: blocking > 0 ? Palette.redText : Palette.amberInk,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               if (capture.loopClosed)
                 const TextSpan(
                   text: ' · closed',
-                  style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: Palette.greenInk, fontWeight: FontWeight.w700),
                 ),
             ],
           ),
@@ -416,56 +519,72 @@ class _StatusPanel extends StatelessWidget {
     );
   }
 
-  Widget _details(BuildContext context, Widget gpsRow) {
+  Widget _details(Widget gpsRow) {
+    Widget note(String text, Tone t, IconData icon, {Key? key}) => Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(color: t.tint, borderRadius: BorderRadius.circular(10)),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: t.text),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                key: key,
+                style: TextStyle(color: t.text, fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         gpsRow,
-        const SizedBox(height: 6),
-        Text(
-          '${capture.nodes.length} corners · ${formatArea(capture.areaSqm)} · ${formatLength(capture.perimeterM)} perimeter',
-          key: const Key('measures'),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: Fact('Corners', '${capture.nodes.length}', valueKey: const Key('corners'))),
+            Expanded(child: Fact('Area', formatSqm(capture.areaSqm), valueKey: const Key('area'))),
+            Expanded(child: Fact('Perimeter', formatLength(capture.perimeterM), valueKey: const Key('perimeter'))),
+          ],
         ),
         if (capture.loopClosed)
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
-            child: Text(
-              'Back at the first corner — boundary closed. Review and tap Finish.',
-              key: Key('loop-closed'),
-              style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
-            ),
+          note(
+            'Back at the first corner — boundary closed. Review and tap Finish.',
+            Tone.green,
+            Icons.check_circle_outline,
+            key: const Key('loop-closed'),
           ),
         if (capture.selfIntersects)
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
-            child: Text('Boundary lines cross — undo the last corners.', style: TextStyle(color: Colors.red)),
-          ),
+          note('Boundary lines cross — undo the last corners.', Tone.red, Icons.error_outline),
         // Kept short: the panel sits over the map the surveyor is following.
         for (final (i, e) in encroachments.take(2).indexed)
+          note(
+            _describe(e),
+            e.blocking ? Tone.red : Tone.amber,
+            Icons.warning_amber_rounded,
+            key: i == 0 ? const Key('encroachment') : null,
+          ),
+        if (encroachments.length > 2)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              _describe(e),
-              key: i == 0 ? const Key('encroachment') : null,
-              style: TextStyle(
-                color: e.blocking ? Colors.red.shade700 : Colors.orange.shade900,
-                fontWeight: FontWeight.w600,
-              ),
+              'and ${encroachments.length - 2} more overlap${encroachments.length == 3 ? '' : 's'}',
+              style: const TextStyle(color: Palette.redText, fontWeight: FontWeight.w600),
             ),
           ),
-        if (encroachments.length > 2)
-          Text(
-            'and ${encroachments.length - 2} more overlap${encroachments.length == 3 ? '' : 's'}',
-            style: TextStyle(color: Colors.red.shade700),
-          ),
-        if (capture.storageError != null) Text(capture.storageError!, style: const TextStyle(color: Colors.red)),
+        if (capture.storageError != null) note(capture.storageError!, Tone.red, Icons.sd_card_alert_outlined),
         if (neighbourNote != null)
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.only(top: 8),
             child: Text(
               neighbourNote!,
               key: const Key('neighbours'),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+              style: const TextStyle(fontSize: 12, color: Palette.muted),
             ),
           ),
       ],

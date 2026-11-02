@@ -114,6 +114,25 @@ def list_events(conn: Connection, parcel_id: UUID) -> list[dict]:
     """, (parcel_id,)).fetchall()
 
 
+def recent_events(conn: Connection, limit: int) -> list[dict]:
+    """Latest audit events across all parcels, newest first."""
+    return conn.execute("""
+        SELECT e.event_type, e.detail, e.at, e.actor_id, u.full_name AS actor_name,
+               p.id AS parcel_id, p.title_deed_no, p.owner_name
+        FROM parcel_events e
+        JOIN parcels p ON p.id = e.parcel_id
+        LEFT JOIN users u ON u.id = e.actor_id
+        ORDER BY e.at DESC, e.id DESC LIMIT %s
+    """, (limit,)).fetchall()
+
+
+def status_counts(conn: Connection) -> dict[str, int]:
+    counts = {"APPROVED": 0, "PENDING": 0, "REJECTED": 0}
+    for row in conn.execute("SELECT status, count(*) AS n FROM parcels GROUP BY status").fetchall():
+        counts[row["status"]] = row["n"]
+    return counts
+
+
 def list_parcels(conn: Connection, bbox: tuple[float, float, float, float] | None,
                  status: str | None, limit: int) -> list[dict]:
     clauses, params = [], []

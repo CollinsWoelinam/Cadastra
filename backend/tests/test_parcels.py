@@ -174,3 +174,16 @@ def test_vector_tile(client, submit):
     assert r.headers["content-type"] == "application/vnd.mapbox-vector-tile"
     assert b"parcels" in r.content
     assert client.get(f"/tiles/14/{x + 50}/{y}.mvt").content == b""
+
+
+def test_stats_and_recent_events(client, reviewer, submit):
+    assert client.get("/parcels/stats").json() == {"APPROVED": 0, "PENDING": 0, "REJECTED": 0}
+    a = submit(square(0, 0, 10), title_deed_no="GA-EV1").json()["parcel"]["id"]
+    submit(square(500, 0, 10), title_deed_no="GA-EV2")
+    reviewer.post(f"/parcels/{a}/approve", json={"note": "ok"})
+    assert client.get("/parcels/stats").json() == {"APPROVED": 1, "PENDING": 1, "REJECTED": 0}
+
+    events = client.get("/events", params={"limit": 2}).json()
+    assert [(e["event_type"], e["title_deed_no"], e["actor_name"]) for e in events] == [
+        ("APPROVED", "GA-EV1", "Reviewer"), ("SUBMITTED", "GA-EV2", "Surveyor")]
+    assert events[0]["parcel_id"] == a

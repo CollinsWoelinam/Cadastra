@@ -7,6 +7,8 @@ COPY . .
 # The basemap is compiled into the browser bundle, so it is chosen at build time.
 ARG NEXT_PUBLIC_BASEMAP_TILES=""
 ARG NEXT_PUBLIC_BASEMAP_ATTRIBUTION=""
+# Public address encoded in certificate QR codes (the PDF renderer reaches the portal internally).
+ARG NEXT_PUBLIC_PORTAL_URL=""
 RUN npm run build
 
 # Playwright's image carries the Chromium build that renders certificate PDFs. Its

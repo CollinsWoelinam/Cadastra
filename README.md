@@ -50,6 +50,18 @@ Migrations in `backend/migrations/*.sql` are applied automatically on API start.
 | `GET /parcels/{id}/survey-plan` | Vertex schedule in Ghana National Grid (ft), Ghana Metre Grid, UTM; leg bearings/lengths; area in m²/ha/acres |
 | `GET /parcels/extent` | Bounding box of all parcels |
 | `GET /tiles/{z}/{x}/{y}.mvt` | Vector tiles for the map (`parcels` layer) |
+| `GET /parcels/stats` · `GET /events` | Counts per status; latest audit events across the registry |
+| `POST` · `GET /parcels/{id}/certificates` | Issue (reviewers, approved parcels only) and list certificates |
+| `GET /verify/{code}` | **Public**: check a certificate by its code — genuine, or out of date with what changed |
+
+### Certificates and verification
+
+A reviewer issues a certificate for an approved parcel from its survey plan page. Each gets a sequential number
+(C-2026-000123) and a random 8-character code (CDX-7K4M-Q2PA, 40 bits) printed with a QR code. The certificate stores
+a snapshot of what it certified; `/verify/{code}` — and the portal's public page `/verify/{code}`, no sign-in —
+compares it with the live record and reports **genuine** or **out of date** with each changed field. Unknown codes
+are throttled per address (20 per 15 minutes). Set `NEXT_PUBLIC_PORTAL_URL` when building the portal so QR codes
+carry the public address (`deploy/docker-compose.yml` sets it from `PORTAL_DOMAIN`).
 
 ### Design notes
 - Overlap = interiors intersect (`ST_Relate 'T********'`), which catches containment and identical

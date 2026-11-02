@@ -95,6 +95,18 @@ def list_parcels(conn: Conn,
     ]}
 
 
+@router.get("/parcels/stats")
+def parcels_stats(conn: Conn):
+    """Number of parcels in each status."""
+    return repo.status_counts(conn)
+
+
+@router.get("/events")
+def recent_events(conn: Conn, limit: Annotated[int, Query(ge=1, le=100)] = 20):
+    """Latest audit events across the registry, newest first."""
+    return repo.recent_events(conn, limit)
+
+
 @router.get("/parcels/extent")
 def parcels_extent(conn: Conn):
     """Bounding box [minLon, minLat, maxLon, maxLat] of all parcels, or null when empty."""

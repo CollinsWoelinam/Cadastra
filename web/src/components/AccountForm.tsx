@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useMe } from "@/components/Session";
+import { initials } from "@/lib/format";
+import { CheckCircleIcon, WarningIcon } from "@/components/Icons";
+
+const ROLE_LABEL = { SURVEYOR: "Surveyor", REVIEWER: "Reviewer", ADMIN: "Administrator" } as const;
 
 export default function AccountForm() {
   const me = useMe();
@@ -33,23 +37,27 @@ export default function AccountForm() {
   if (!me) return null;
   return (
     <div className="page narrow">
-      <h1>My account</h1>
-      <dl className="props card">
-        <dt>Name</dt><dd>{me.full_name}</dd>
-        <dt>Email</dt><dd>{me.email}</dd>
-        <dt>Role</dt><dd className="role">{me.role.toLowerCase()}</dd>
-      </dl>
-
-      <form className="card form-grid" onSubmit={submit}>
-        <h2>Change password</h2>
-        <label>Current password<input name="current_password" type="password" autoComplete="current-password" required /></label>
-        <label>New password<input name="new_password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required /></label>
-        <label>Confirm new password<input name="confirm" type="password" autoComplete="new-password" minLength={12} maxLength={128} required /></label>
-        <p className="muted">At least 12 characters. A few unrelated words is easier to remember than symbols.</p>
-        {message && <div className={`alert ${message.ok ? "ok" : ""}`}>{message.text}</div>}
-        <div className="actions">
-          <button className="btn primary" type="submit" disabled={busy}>{busy ? "Saving…" : "Change password"}</button>
+      <div className="page-head"><h1>My account</h1></div>
+      <div className="card profile">
+        <span className={`avatar lg ${me.role}`}>{initials(me.full_name)}</span>
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 17 }}>{me.full_name}</div>
+          <div className="muted">{me.email} · {ROLE_LABEL[me.role]}</div>
         </div>
+      </div>
+
+      <form className="card form-card" onSubmit={submit}>
+        <h2>Change password</h2>
+        <div className="field"><label htmlFor="cur">Current password</label><input id="cur" name="current_password" type="password" className="input" autoComplete="current-password" required /></div>
+        <div className="field"><label htmlFor="new">New password</label><input id="new" name="new_password" type="password" className="input" autoComplete="new-password" minLength={12} maxLength={128} required /></div>
+        <div className="field"><label htmlFor="conf">Confirm new password</label><input id="conf" name="confirm" type="password" className="input" autoComplete="new-password" minLength={12} maxLength={128} required /></div>
+        <p className="muted" style={{ margin: 0 }}>At least 12 characters. A few unrelated words are easier to remember than symbols.</p>
+        {message && (
+          <div className={`alert ${message.ok ? "alert-ok" : ""}`} role="status">
+            {message.ok ? <CheckCircleIcon color="#0B6E4F" /> : <WarningIcon color="#B42318" />}<span>{message.text}</span>
+          </div>
+        )}
+        <div><button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Saving…" : "Change password"}</button></div>
       </form>
     </div>
   );

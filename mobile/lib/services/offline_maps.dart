@@ -28,6 +28,9 @@ class OfflineMaps extends ChangeNotifier {
 
   /// Progress of the download in flight, if any.
   ({int done, int total})? progress;
+
+  /// Name of the area being saved, while [progress] is set.
+  String? savingName;
   bool _cancel = false;
 
   bool get downloading => progress != null;
@@ -40,6 +43,7 @@ class OfflineMaps extends ChangeNotifier {
   Future<String> download(String name, GeoBounds area) async {
     if (downloading) throw StateError('a download is already running');
     _cancel = false;
+    savingName = name;
     progress = (done: 0, total: tileCount(area));
     notifyListeners();
     final id = await db.into(db.offlineAreas).insert(OfflineAreasCompanion.insert(
@@ -83,6 +87,7 @@ class OfflineMaps extends ChangeNotifier {
           '${result == null ? '' : ' and ${result.stored} map tiles'}.';
     } finally {
       progress = null;
+      savingName = null;
       notifyListeners();
     }
   }

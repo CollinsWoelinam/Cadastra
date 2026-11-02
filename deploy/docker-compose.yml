@@ -48,6 +48,7 @@ services:
       args:
         NEXT_PUBLIC_BASEMAP_TILES: ${BASEMAP_TILES:-}
         NEXT_PUBLIC_BASEMAP_ATTRIBUTION: ${BASEMAP_ATTRIBUTION:-}
+        NEXT_PUBLIC_PORTAL_URL: https://${PORTAL_DOMAIN}
     restart: unless-stopped
     environment:
       CORE_API_URL: http://api:8000

@@ -88,8 +88,8 @@ void main() {
     walkRectangle(30, 36).forEach(gps.emit);
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byKey(const Key('loop-closed')), findsOneWidget);
-    final measures = tester.widget<Text>(find.byKey(const Key('measures'))).data!;
-    expect(measures, matches(RegExp(r'^2\d corners · 10[67]\d\.\d m²')));
+    expect(tester.widget<Text>(find.byKey(const Key('corners'))).data, matches(RegExp(r'^2\d$')));
+    expect(tester.widget<Text>(find.byKey(const Key('area'))).data, matches(RegExp(r'^1,0[67]\d\.\d m²$')));
     expect(find.text('GPS ±3.0 m'), findsOneWidget);
 
     // The registered neighbour was fetched for the area and the overlap is flagged on site.
@@ -114,15 +114,15 @@ void main() {
     await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Finish')));
     await tester.pumpAndSettle();
     expect(find.text('GA/EL/3001'), findsOneWidget);
-    expect(find.text('Pending review — encroaches on approved land'), findsOneWidget);
+    expect(find.text('Pending review · encroaches on approved land'), findsOneWidget);
     expect(uploaded!['title_deed_no'], 'GA/EL/3001');
     expect((uploaded!['survey_points'] as List).length, greaterThan(20));
 
     // Detail
     await tester.tap(find.text('GA/EL/3001'));
     await tester.pumpAndSettle();
-    expect(find.text('Pending review — encroaches on approved land'), findsOneWidget);
-    expect(find.text('GA/EL/1005 · Efua Addo'), findsOneWidget);
+    expect(find.textContaining('Encroaches on approved land.', findRichText: true), findsOneWidget);
+    expect(find.text('Efua Addo · approved'), findsOneWidget);
     expect(find.text('127.79 m²'), findsOneWidget);
     expect(core.requests.where((r) => r.method == 'POST' && r.url.path == '/parcels').single.headers['Authorization'],
         'Bearer access-1');
@@ -130,9 +130,9 @@ void main() {
     // Sign out returns to the sign-in screen; the survey stays on the device.
     await tester.pageBack();
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Account'));
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Account')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Sign out'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Sign out'));
     await tester.pumpAndSettle();
     await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Sign out')));
     await tester.pumpAndSettle();

@@ -37,6 +37,42 @@ export interface ParcelEvent {
   actor_name: string | null;
 }
 
+export interface RegistryEvent extends ParcelEvent {
+  parcel_id: string;
+  title_deed_no: string;
+  owner_name: string;
+}
+
+export type StatusCounts = Record<ParcelStatus, number>;
+
+export interface Certificate {
+  id: string;
+  number: string;
+  /** Verification code as printed, e.g. CDX-7K4M-Q2PA. */
+  code: string;
+  parcel_id: string;
+  issued_at: string;
+  issued_by_name: string | null;
+  /** False once the parcel record has changed since the certificate was issued. */
+  current?: boolean;
+}
+
+type CertifiedFields = { title_deed_no: string; owner_name: string; status: ParcelStatus; area_sqm: number; corners: number };
+
+export interface Verification {
+  verdict: "genuine" | "outdated";
+  checked_at: string;
+  certificate: Certificate;
+  certified: CertifiedFields;
+  current: CertifiedFields & {
+    perimeter_m: number;
+    boundary: Polygon;
+    survey_accuracy_m: number | null;
+    reviewed_at: string | null;
+  };
+  changes: { field: string; certified: unknown; current: unknown }[];
+}
+
 interface XY {
   x: number;
   y: number;
@@ -109,6 +145,10 @@ export const api = {
     request<{ features: { properties: Omit<Parcel, "boundary">; geometry: Polygon }[] }>(
       `/parcels${status ? `?status=${status}` : ""}`,
     ).then((fc) => fc.features.map((f): Parcel => ({ ...f.properties, boundary: f.geometry }))),
+  certificates: (id: string) => request<Certificate[]>(`/parcels/${id}/certificates`),
+  issueCertificate: (id: string) => request<Certificate>(`/parcels/${id}/certificates`, { method: "POST" }),
+  stats: () => request<StatusCounts>("/parcels/stats"),
+  recentEvents: (limit = 8) => request<RegistryEvent[]>(`/events?limit=${limit}`),
   extent: () => request<[number, number, number, number] | null>("/parcels/extent"),
   conflicts: (id: string) => request<Conflict[]>(`/parcels/${id}/conflicts`),
   events: (id: string) => request<ParcelEvent[]>(`/parcels/${id}/events`),

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from .config import settings
 from .db import migrate, pool
-from .routes import auth, parcels, users
+from .routes import auth, certificates, parcels, users
 
 
 @asynccontextmanager
@@ -19,6 +19,8 @@ app = FastAPI(title="Cadastra Core Engine", lifespan=lifespan)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(parcels.router)
+app.include_router(certificates.router)
+app.include_router(certificates.public)
 
 
 @app.get("/health")

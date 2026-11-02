@@ -7,6 +7,7 @@ import '../config.dart';
 import '../data/db.dart';
 import '../location/position_source.dart';
 import '../map/offline_tile_provider.dart';
+import 'theme.dart';
 
 const _accra = LatLng(5.6037, -0.1870);
 
@@ -36,7 +37,8 @@ class SurveyMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final blue = Theme.of(context).colorScheme.primary;
+    // The surveyor's own boundary: blue, apart from the green of approved parcels.
+    const blue = Palette.blue;
     return FlutterMap(
       mapController: controller,
       options: MapOptions(

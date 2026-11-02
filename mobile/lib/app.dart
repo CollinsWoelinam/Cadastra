@@ -8,7 +8,8 @@ import 'services/neighbour_service.dart';
 import 'services/offline_maps.dart';
 import 'services/sync_service.dart';
 import 'ui/login_screen.dart';
-import 'ui/surveys_screen.dart';
+import 'ui/home_shell.dart';
+import 'ui/theme.dart';
 
 class AppServices {
   final AppDatabase db;
@@ -62,12 +63,12 @@ class CadastraApp extends StatelessWidget {
       services: services,
       child: MaterialApp(
         title: 'Cadastra Field',
-        theme: ThemeData(colorSchemeSeed: const Color(0xFF1D4ED8), useMaterial3: true),
+        theme: cadastraTheme(),
         // Signing out swaps the whole navigator back to the sign-in screen.
         home: ListenableBuilder(
           listenable: services.session,
           builder: (context, _) => services.session.signedIn
-              ? SurveysScreen(key: ValueKey(services.session.user!.id))
+              ? HomeShell(key: ValueKey(services.session.user!.id))
               : const LoginScreen(),
         ),
       ),

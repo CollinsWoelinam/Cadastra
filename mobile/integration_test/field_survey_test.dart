@@ -122,11 +122,11 @@ void main() {
     await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Finish')));
     await tester.pump(const Duration(seconds: 1));
 
-    await _pumpUntil(tester, find.text('Pending review — encroaches on approved land'));
+    await _pumpUntil(tester, find.text('Pending review · encroaches on approved land'));
     await _checkpoint(tester, 'list');
 
     await tester.tap(find.text(deed));
-    await _pumpUntil(tester, find.textContaining('Overlaps an approved parcel'));
+    await _pumpUntil(tester, find.textContaining('Encroaches on approved land.', findRichText: true));
     await _checkpoint(tester, 'detail');
 
     final survey = (await db.surveysIn(SyncState.synced, session.user!.id)).single;
