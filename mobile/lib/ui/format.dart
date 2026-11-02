@@ -11,6 +11,19 @@ String formatArea(double sqm) =>
 
 String formatLength(double m) => '${m.toStringAsFixed(1)} m';
 
+String formatDistance(double m) => m < 1000 ? '${m.round()} m' : '${(m / 1000).toStringAsFixed(m < 10000 ? 1 : 0)} km';
+
+String formatBytes(int bytes) => bytes < 1024 * 1024
+    ? '${(bytes / 1024).ceil()} KB'
+    : '${(bytes / (1024 * 1024)).toStringAsFixed(bytes < 100 * 1024 * 1024 ? 1 : 0)} MB';
+
+String formatCount(int n) => n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
+
+String formatDate(DateTime d) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return '${d.day} ${months[d.month - 1]} ${d.year}';
+}
+
 class Conflict {
   final String titleDeedNo;
   final String ownerName;

@@ -37,17 +37,24 @@ LatLng _offset(double east, double north) => LatLng(
       _start.longitude + east / (111320.0 * math.cos(_start.latitude * math.pi / 180)),
     );
 
+// The test binding draws frames only when pumped. Pump at display rate so the map
+// behaves as in the running app (flutter_map prunes tiles on timers against the
+// last drawn camera).
+Future<void> _frames(WidgetTester tester, Duration duration) async {
+  for (var t = Duration.zero; t < duration; t += const Duration(milliseconds: 16)) {
+    await tester.pump(const Duration(milliseconds: 16));
+  }
+}
+
 Future<void> _checkpoint(WidgetTester tester, String name) async {
   // ignore: avoid_print
   print('CHECKPOINT $name');
-  for (var i = 0; i < 8; i++) {
-    await tester.pump(const Duration(milliseconds: 500));
-  }
+  await _frames(tester, const Duration(seconds: 4));
 }
 
 Future<void> _pumpUntil(WidgetTester tester, Finder finder, {int tries = 60}) async {
   for (var i = 0; i < tries && finder.evaluate().isEmpty; i++) {
-    await tester.pump(const Duration(milliseconds: 500));
+    await _frames(tester, const Duration(milliseconds: 500));
   }
   expect(finder, findsWidgets);
 }
@@ -98,10 +105,17 @@ void main() {
       if (c == 1) await _checkpoint(tester, 'walking');
     }
     await _pumpUntil(tester, find.byKey(const Key('loop-closed')));
+    // The seeded approved parcels were fetched for the area and the overlap is flagged
+    // on the device, before anything is uploaded.
+    await _pumpUntil(tester, find.byKey(const Key('encroachment')));
+    expect(tester.widget<Text>(find.byKey(const Key('encroachment'))).data, startsWith('Inside approved GA/EL/'));
+    expect(tester.widget<Text>(find.byKey(const Key('neighbours'))).data, matches(RegExp(r'^\d+ registered parcels nearby$')));
     await _checkpoint(tester, 'closed');
 
     await tester.tap(find.byKey(const Key('finish')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('finish-overlap-warning')), findsOneWidget);
+    await _checkpoint(tester, 'finish-warning');
     await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Finish')));
     await tester.pump(const Duration(seconds: 1));
 

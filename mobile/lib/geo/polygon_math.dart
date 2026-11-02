@@ -48,7 +48,7 @@ class PolygonMath {
       for (var j = i + 1; j < n; j++) {
         // Skip legs that share a vertex.
         if (j == i + 1 || (i == 0 && j == n - 1)) continue;
-        if (_segmentsCross(pts[i], pts[(i + 1) % n], pts[j], pts[(j + 1) % n])) return true;
+        if (segmentsCross(pts[i], pts[(i + 1) % n], pts[j], pts[(j + 1) % n])) return true;
       }
     }
     return false;
@@ -81,7 +81,8 @@ class PolygonMath {
     ];
   }
 
-  static bool _segmentsCross(math.Point<double> p1, math.Point<double> p2,
+  /// True when segments p1–p2 and p3–p4 cross at a point interior to both.
+  static bool segmentsCross(math.Point<double> p1, math.Point<double> p2,
       math.Point<double> p3, math.Point<double> p4) {
     double orient(math.Point<double> a, math.Point<double> b, math.Point<double> c) =>
         (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
@@ -90,6 +91,30 @@ class PolygonMath {
     return ((d1 > 0) != (d2 > 0)) && ((d3 > 0) != (d4 > 0)) &&
         d1 != 0 && d2 != 0 && d3 != 0 && d4 != 0;
   }
+}
+
+/// Ray-casting test; points exactly on an edge may fall either way.
+bool pointInPolygon(math.Point<double> p, List<math.Point<double>> ring) {
+  var inside = false;
+  for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    final a = ring[i], b = ring[j];
+    if ((a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+/// Shortest distance from [p] to the closed ring's edges, in the plane's units.
+double distanceToRing(math.Point<double> p, List<math.Point<double>> ring) {
+  var best = double.infinity;
+  for (var i = 0; i < ring.length; i++) {
+    final a = ring[i], b = ring[(i + 1) % ring.length];
+    final dx = b.x - a.x, dy = b.y - a.y;
+    final len2 = dx * dx + dy * dy;
+    final t = len2 == 0 ? 0.0 : (((p.x - a.x) * dx + (p.y - a.y) * dy) / len2).clamp(0.0, 1.0);
+    final ex = a.x + t * dx - p.x, ey = a.y + t * dy - p.y;
+    best = math.min(best, math.sqrt(ex * ex + ey * ey));
+  }
+  return best;
 }
 
 const sqmPerAcre = 4046.8564224;

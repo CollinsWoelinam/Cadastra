@@ -1299,16 +1299,1417 @@ class NodesCompanion extends UpdateCompanion<Node> {
   }
 }
 
+class $RegisteredParcelsTable extends RegisteredParcels
+    with TableInfo<$RegisteredParcelsTable, RegisteredParcel> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RegisteredParcelsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleDeedNoMeta = const VerificationMeta(
+    'titleDeedNo',
+  );
+  @override
+  late final GeneratedColumn<String> titleDeedNo = GeneratedColumn<String>(
+    'title_deed_no',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ownerNameMeta = const VerificationMeta(
+    'ownerName',
+  );
+  @override
+  late final GeneratedColumn<String> ownerName = GeneratedColumn<String>(
+    'owner_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ringJsonMeta = const VerificationMeta(
+    'ringJson',
+  );
+  @override
+  late final GeneratedColumn<String> ringJson = GeneratedColumn<String>(
+    'ring_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _southMeta = const VerificationMeta('south');
+  @override
+  late final GeneratedColumn<double> south = GeneratedColumn<double>(
+    'south',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _westMeta = const VerificationMeta('west');
+  @override
+  late final GeneratedColumn<double> west = GeneratedColumn<double>(
+    'west',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _northMeta = const VerificationMeta('north');
+  @override
+  late final GeneratedColumn<double> north = GeneratedColumn<double>(
+    'north',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _eastMeta = const VerificationMeta('east');
+  @override
+  late final GeneratedColumn<double> east = GeneratedColumn<double>(
+    'east',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    titleDeedNo,
+    ownerName,
+    status,
+    ringJson,
+    south,
+    west,
+    north,
+    east,
+    fetchedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'registered_parcels';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RegisteredParcel> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('title_deed_no')) {
+      context.handle(
+        _titleDeedNoMeta,
+        titleDeedNo.isAcceptableOrUnknown(
+          data['title_deed_no']!,
+          _titleDeedNoMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_titleDeedNoMeta);
+    }
+    if (data.containsKey('owner_name')) {
+      context.handle(
+        _ownerNameMeta,
+        ownerName.isAcceptableOrUnknown(data['owner_name']!, _ownerNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerNameMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('ring_json')) {
+      context.handle(
+        _ringJsonMeta,
+        ringJson.isAcceptableOrUnknown(data['ring_json']!, _ringJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ringJsonMeta);
+    }
+    if (data.containsKey('south')) {
+      context.handle(
+        _southMeta,
+        south.isAcceptableOrUnknown(data['south']!, _southMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_southMeta);
+    }
+    if (data.containsKey('west')) {
+      context.handle(
+        _westMeta,
+        west.isAcceptableOrUnknown(data['west']!, _westMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_westMeta);
+    }
+    if (data.containsKey('north')) {
+      context.handle(
+        _northMeta,
+        north.isAcceptableOrUnknown(data['north']!, _northMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_northMeta);
+    }
+    if (data.containsKey('east')) {
+      context.handle(
+        _eastMeta,
+        east.isAcceptableOrUnknown(data['east']!, _eastMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_eastMeta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RegisteredParcel map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RegisteredParcel(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      titleDeedNo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title_deed_no'],
+      )!,
+      ownerName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_name'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      ringJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ring_json'],
+      )!,
+      south: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}south'],
+      )!,
+      west: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}west'],
+      )!,
+      north: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}north'],
+      )!,
+      east: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}east'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RegisteredParcelsTable createAlias(String alias) {
+    return $RegisteredParcelsTable(attachedDatabase, alias);
+  }
+}
+
+class RegisteredParcel extends DataClass
+    implements Insertable<RegisteredParcel> {
+  final String id;
+  final String titleDeedNo;
+  final String ownerName;
+
+  /// APPROVED or PENDING.
+  final String status;
+
+  /// Outer ring as a JSON array of [lon, lat] pairs.
+  final String ringJson;
+  final double south;
+  final double west;
+  final double north;
+  final double east;
+  final DateTime fetchedAt;
+  const RegisteredParcel({
+    required this.id,
+    required this.titleDeedNo,
+    required this.ownerName,
+    required this.status,
+    required this.ringJson,
+    required this.south,
+    required this.west,
+    required this.north,
+    required this.east,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['title_deed_no'] = Variable<String>(titleDeedNo);
+    map['owner_name'] = Variable<String>(ownerName);
+    map['status'] = Variable<String>(status);
+    map['ring_json'] = Variable<String>(ringJson);
+    map['south'] = Variable<double>(south);
+    map['west'] = Variable<double>(west);
+    map['north'] = Variable<double>(north);
+    map['east'] = Variable<double>(east);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  RegisteredParcelsCompanion toCompanion(bool nullToAbsent) {
+    return RegisteredParcelsCompanion(
+      id: Value(id),
+      titleDeedNo: Value(titleDeedNo),
+      ownerName: Value(ownerName),
+      status: Value(status),
+      ringJson: Value(ringJson),
+      south: Value(south),
+      west: Value(west),
+      north: Value(north),
+      east: Value(east),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory RegisteredParcel.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RegisteredParcel(
+      id: serializer.fromJson<String>(json['id']),
+      titleDeedNo: serializer.fromJson<String>(json['titleDeedNo']),
+      ownerName: serializer.fromJson<String>(json['ownerName']),
+      status: serializer.fromJson<String>(json['status']),
+      ringJson: serializer.fromJson<String>(json['ringJson']),
+      south: serializer.fromJson<double>(json['south']),
+      west: serializer.fromJson<double>(json['west']),
+      north: serializer.fromJson<double>(json['north']),
+      east: serializer.fromJson<double>(json['east']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'titleDeedNo': serializer.toJson<String>(titleDeedNo),
+      'ownerName': serializer.toJson<String>(ownerName),
+      'status': serializer.toJson<String>(status),
+      'ringJson': serializer.toJson<String>(ringJson),
+      'south': serializer.toJson<double>(south),
+      'west': serializer.toJson<double>(west),
+      'north': serializer.toJson<double>(north),
+      'east': serializer.toJson<double>(east),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  RegisteredParcel copyWith({
+    String? id,
+    String? titleDeedNo,
+    String? ownerName,
+    String? status,
+    String? ringJson,
+    double? south,
+    double? west,
+    double? north,
+    double? east,
+    DateTime? fetchedAt,
+  }) => RegisteredParcel(
+    id: id ?? this.id,
+    titleDeedNo: titleDeedNo ?? this.titleDeedNo,
+    ownerName: ownerName ?? this.ownerName,
+    status: status ?? this.status,
+    ringJson: ringJson ?? this.ringJson,
+    south: south ?? this.south,
+    west: west ?? this.west,
+    north: north ?? this.north,
+    east: east ?? this.east,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  RegisteredParcel copyWithCompanion(RegisteredParcelsCompanion data) {
+    return RegisteredParcel(
+      id: data.id.present ? data.id.value : this.id,
+      titleDeedNo: data.titleDeedNo.present
+          ? data.titleDeedNo.value
+          : this.titleDeedNo,
+      ownerName: data.ownerName.present ? data.ownerName.value : this.ownerName,
+      status: data.status.present ? data.status.value : this.status,
+      ringJson: data.ringJson.present ? data.ringJson.value : this.ringJson,
+      south: data.south.present ? data.south.value : this.south,
+      west: data.west.present ? data.west.value : this.west,
+      north: data.north.present ? data.north.value : this.north,
+      east: data.east.present ? data.east.value : this.east,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RegisteredParcel(')
+          ..write('id: $id, ')
+          ..write('titleDeedNo: $titleDeedNo, ')
+          ..write('ownerName: $ownerName, ')
+          ..write('status: $status, ')
+          ..write('ringJson: $ringJson, ')
+          ..write('south: $south, ')
+          ..write('west: $west, ')
+          ..write('north: $north, ')
+          ..write('east: $east, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    titleDeedNo,
+    ownerName,
+    status,
+    ringJson,
+    south,
+    west,
+    north,
+    east,
+    fetchedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RegisteredParcel &&
+          other.id == this.id &&
+          other.titleDeedNo == this.titleDeedNo &&
+          other.ownerName == this.ownerName &&
+          other.status == this.status &&
+          other.ringJson == this.ringJson &&
+          other.south == this.south &&
+          other.west == this.west &&
+          other.north == this.north &&
+          other.east == this.east &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class RegisteredParcelsCompanion extends UpdateCompanion<RegisteredParcel> {
+  final Value<String> id;
+  final Value<String> titleDeedNo;
+  final Value<String> ownerName;
+  final Value<String> status;
+  final Value<String> ringJson;
+  final Value<double> south;
+  final Value<double> west;
+  final Value<double> north;
+  final Value<double> east;
+  final Value<DateTime> fetchedAt;
+  final Value<int> rowid;
+  const RegisteredParcelsCompanion({
+    this.id = const Value.absent(),
+    this.titleDeedNo = const Value.absent(),
+    this.ownerName = const Value.absent(),
+    this.status = const Value.absent(),
+    this.ringJson = const Value.absent(),
+    this.south = const Value.absent(),
+    this.west = const Value.absent(),
+    this.north = const Value.absent(),
+    this.east = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RegisteredParcelsCompanion.insert({
+    required String id,
+    required String titleDeedNo,
+    required String ownerName,
+    required String status,
+    required String ringJson,
+    required double south,
+    required double west,
+    required double north,
+    required double east,
+    required DateTime fetchedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       titleDeedNo = Value(titleDeedNo),
+       ownerName = Value(ownerName),
+       status = Value(status),
+       ringJson = Value(ringJson),
+       south = Value(south),
+       west = Value(west),
+       north = Value(north),
+       east = Value(east),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<RegisteredParcel> custom({
+    Expression<String>? id,
+    Expression<String>? titleDeedNo,
+    Expression<String>? ownerName,
+    Expression<String>? status,
+    Expression<String>? ringJson,
+    Expression<double>? south,
+    Expression<double>? west,
+    Expression<double>? north,
+    Expression<double>? east,
+    Expression<DateTime>? fetchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (titleDeedNo != null) 'title_deed_no': titleDeedNo,
+      if (ownerName != null) 'owner_name': ownerName,
+      if (status != null) 'status': status,
+      if (ringJson != null) 'ring_json': ringJson,
+      if (south != null) 'south': south,
+      if (west != null) 'west': west,
+      if (north != null) 'north': north,
+      if (east != null) 'east': east,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RegisteredParcelsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? titleDeedNo,
+    Value<String>? ownerName,
+    Value<String>? status,
+    Value<String>? ringJson,
+    Value<double>? south,
+    Value<double>? west,
+    Value<double>? north,
+    Value<double>? east,
+    Value<DateTime>? fetchedAt,
+    Value<int>? rowid,
+  }) {
+    return RegisteredParcelsCompanion(
+      id: id ?? this.id,
+      titleDeedNo: titleDeedNo ?? this.titleDeedNo,
+      ownerName: ownerName ?? this.ownerName,
+      status: status ?? this.status,
+      ringJson: ringJson ?? this.ringJson,
+      south: south ?? this.south,
+      west: west ?? this.west,
+      north: north ?? this.north,
+      east: east ?? this.east,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (titleDeedNo.present) {
+      map['title_deed_no'] = Variable<String>(titleDeedNo.value);
+    }
+    if (ownerName.present) {
+      map['owner_name'] = Variable<String>(ownerName.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (ringJson.present) {
+      map['ring_json'] = Variable<String>(ringJson.value);
+    }
+    if (south.present) {
+      map['south'] = Variable<double>(south.value);
+    }
+    if (west.present) {
+      map['west'] = Variable<double>(west.value);
+    }
+    if (north.present) {
+      map['north'] = Variable<double>(north.value);
+    }
+    if (east.present) {
+      map['east'] = Variable<double>(east.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RegisteredParcelsCompanion(')
+          ..write('id: $id, ')
+          ..write('titleDeedNo: $titleDeedNo, ')
+          ..write('ownerName: $ownerName, ')
+          ..write('status: $status, ')
+          ..write('ringJson: $ringJson, ')
+          ..write('south: $south, ')
+          ..write('west: $west, ')
+          ..write('north: $north, ')
+          ..write('east: $east, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $OfflineAreasTable extends OfflineAreas
+    with TableInfo<$OfflineAreasTable, OfflineArea> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OfflineAreasTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _southMeta = const VerificationMeta('south');
+  @override
+  late final GeneratedColumn<double> south = GeneratedColumn<double>(
+    'south',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _westMeta = const VerificationMeta('west');
+  @override
+  late final GeneratedColumn<double> west = GeneratedColumn<double>(
+    'west',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _northMeta = const VerificationMeta('north');
+  @override
+  late final GeneratedColumn<double> north = GeneratedColumn<double>(
+    'north',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _eastMeta = const VerificationMeta('east');
+  @override
+  late final GeneratedColumn<double> east = GeneratedColumn<double>(
+    'east',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _minZoomMeta = const VerificationMeta(
+    'minZoom',
+  );
+  @override
+  late final GeneratedColumn<int> minZoom = GeneratedColumn<int>(
+    'min_zoom',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _maxZoomMeta = const VerificationMeta(
+    'maxZoom',
+  );
+  @override
+  late final GeneratedColumn<int> maxZoom = GeneratedColumn<int>(
+    'max_zoom',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tileSourceMeta = const VerificationMeta(
+    'tileSource',
+  );
+  @override
+  late final GeneratedColumn<String> tileSource = GeneratedColumn<String>(
+    'tile_source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tileCountMeta = const VerificationMeta(
+    'tileCount',
+  );
+  @override
+  late final GeneratedColumn<int> tileCount = GeneratedColumn<int>(
+    'tile_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _bytesMeta = const VerificationMeta('bytes');
+  @override
+  late final GeneratedColumn<int> bytes = GeneratedColumn<int>(
+    'bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _parcelCountMeta = const VerificationMeta(
+    'parcelCount',
+  );
+  @override
+  late final GeneratedColumn<int> parcelCount = GeneratedColumn<int>(
+    'parcel_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _completeMeta = const VerificationMeta(
+    'complete',
+  );
+  @override
+  late final GeneratedColumn<bool> complete = GeneratedColumn<bool>(
+    'complete',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("complete" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    south,
+    west,
+    north,
+    east,
+    minZoom,
+    maxZoom,
+    tileSource,
+    tileCount,
+    bytes,
+    parcelCount,
+    complete,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'offline_areas';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OfflineArea> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('south')) {
+      context.handle(
+        _southMeta,
+        south.isAcceptableOrUnknown(data['south']!, _southMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_southMeta);
+    }
+    if (data.containsKey('west')) {
+      context.handle(
+        _westMeta,
+        west.isAcceptableOrUnknown(data['west']!, _westMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_westMeta);
+    }
+    if (data.containsKey('north')) {
+      context.handle(
+        _northMeta,
+        north.isAcceptableOrUnknown(data['north']!, _northMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_northMeta);
+    }
+    if (data.containsKey('east')) {
+      context.handle(
+        _eastMeta,
+        east.isAcceptableOrUnknown(data['east']!, _eastMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_eastMeta);
+    }
+    if (data.containsKey('min_zoom')) {
+      context.handle(
+        _minZoomMeta,
+        minZoom.isAcceptableOrUnknown(data['min_zoom']!, _minZoomMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_minZoomMeta);
+    }
+    if (data.containsKey('max_zoom')) {
+      context.handle(
+        _maxZoomMeta,
+        maxZoom.isAcceptableOrUnknown(data['max_zoom']!, _maxZoomMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_maxZoomMeta);
+    }
+    if (data.containsKey('tile_source')) {
+      context.handle(
+        _tileSourceMeta,
+        tileSource.isAcceptableOrUnknown(data['tile_source']!, _tileSourceMeta),
+      );
+    }
+    if (data.containsKey('tile_count')) {
+      context.handle(
+        _tileCountMeta,
+        tileCount.isAcceptableOrUnknown(data['tile_count']!, _tileCountMeta),
+      );
+    }
+    if (data.containsKey('bytes')) {
+      context.handle(
+        _bytesMeta,
+        bytes.isAcceptableOrUnknown(data['bytes']!, _bytesMeta),
+      );
+    }
+    if (data.containsKey('parcel_count')) {
+      context.handle(
+        _parcelCountMeta,
+        parcelCount.isAcceptableOrUnknown(
+          data['parcel_count']!,
+          _parcelCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('complete')) {
+      context.handle(
+        _completeMeta,
+        complete.isAcceptableOrUnknown(data['complete']!, _completeMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  OfflineArea map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OfflineArea(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      south: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}south'],
+      )!,
+      west: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}west'],
+      )!,
+      north: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}north'],
+      )!,
+      east: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}east'],
+      )!,
+      minZoom: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}min_zoom'],
+      )!,
+      maxZoom: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_zoom'],
+      )!,
+      tileSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tile_source'],
+      ),
+      tileCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tile_count'],
+      )!,
+      bytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bytes'],
+      )!,
+      parcelCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}parcel_count'],
+      )!,
+      complete: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}complete'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $OfflineAreasTable createAlias(String alias) {
+    return $OfflineAreasTable(attachedDatabase, alias);
+  }
+}
+
+class OfflineArea extends DataClass implements Insertable<OfflineArea> {
+  final int id;
+  final String name;
+  final double south;
+  final double west;
+  final double north;
+  final double east;
+  final int minZoom;
+  final int maxZoom;
+
+  /// Basemap URL template the tiles came from; null when only parcels were saved.
+  final String? tileSource;
+  final int tileCount;
+  final int bytes;
+  final int parcelCount;
+
+  /// False while downloading, or if it was cancelled or partly failed.
+  final bool complete;
+  final DateTime updatedAt;
+  const OfflineArea({
+    required this.id,
+    required this.name,
+    required this.south,
+    required this.west,
+    required this.north,
+    required this.east,
+    required this.minZoom,
+    required this.maxZoom,
+    this.tileSource,
+    required this.tileCount,
+    required this.bytes,
+    required this.parcelCount,
+    required this.complete,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['south'] = Variable<double>(south);
+    map['west'] = Variable<double>(west);
+    map['north'] = Variable<double>(north);
+    map['east'] = Variable<double>(east);
+    map['min_zoom'] = Variable<int>(minZoom);
+    map['max_zoom'] = Variable<int>(maxZoom);
+    if (!nullToAbsent || tileSource != null) {
+      map['tile_source'] = Variable<String>(tileSource);
+    }
+    map['tile_count'] = Variable<int>(tileCount);
+    map['bytes'] = Variable<int>(bytes);
+    map['parcel_count'] = Variable<int>(parcelCount);
+    map['complete'] = Variable<bool>(complete);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  OfflineAreasCompanion toCompanion(bool nullToAbsent) {
+    return OfflineAreasCompanion(
+      id: Value(id),
+      name: Value(name),
+      south: Value(south),
+      west: Value(west),
+      north: Value(north),
+      east: Value(east),
+      minZoom: Value(minZoom),
+      maxZoom: Value(maxZoom),
+      tileSource: tileSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tileSource),
+      tileCount: Value(tileCount),
+      bytes: Value(bytes),
+      parcelCount: Value(parcelCount),
+      complete: Value(complete),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory OfflineArea.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OfflineArea(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      south: serializer.fromJson<double>(json['south']),
+      west: serializer.fromJson<double>(json['west']),
+      north: serializer.fromJson<double>(json['north']),
+      east: serializer.fromJson<double>(json['east']),
+      minZoom: serializer.fromJson<int>(json['minZoom']),
+      maxZoom: serializer.fromJson<int>(json['maxZoom']),
+      tileSource: serializer.fromJson<String?>(json['tileSource']),
+      tileCount: serializer.fromJson<int>(json['tileCount']),
+      bytes: serializer.fromJson<int>(json['bytes']),
+      parcelCount: serializer.fromJson<int>(json['parcelCount']),
+      complete: serializer.fromJson<bool>(json['complete']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'south': serializer.toJson<double>(south),
+      'west': serializer.toJson<double>(west),
+      'north': serializer.toJson<double>(north),
+      'east': serializer.toJson<double>(east),
+      'minZoom': serializer.toJson<int>(minZoom),
+      'maxZoom': serializer.toJson<int>(maxZoom),
+      'tileSource': serializer.toJson<String?>(tileSource),
+      'tileCount': serializer.toJson<int>(tileCount),
+      'bytes': serializer.toJson<int>(bytes),
+      'parcelCount': serializer.toJson<int>(parcelCount),
+      'complete': serializer.toJson<bool>(complete),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  OfflineArea copyWith({
+    int? id,
+    String? name,
+    double? south,
+    double? west,
+    double? north,
+    double? east,
+    int? minZoom,
+    int? maxZoom,
+    Value<String?> tileSource = const Value.absent(),
+    int? tileCount,
+    int? bytes,
+    int? parcelCount,
+    bool? complete,
+    DateTime? updatedAt,
+  }) => OfflineArea(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    south: south ?? this.south,
+    west: west ?? this.west,
+    north: north ?? this.north,
+    east: east ?? this.east,
+    minZoom: minZoom ?? this.minZoom,
+    maxZoom: maxZoom ?? this.maxZoom,
+    tileSource: tileSource.present ? tileSource.value : this.tileSource,
+    tileCount: tileCount ?? this.tileCount,
+    bytes: bytes ?? this.bytes,
+    parcelCount: parcelCount ?? this.parcelCount,
+    complete: complete ?? this.complete,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  OfflineArea copyWithCompanion(OfflineAreasCompanion data) {
+    return OfflineArea(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      south: data.south.present ? data.south.value : this.south,
+      west: data.west.present ? data.west.value : this.west,
+      north: data.north.present ? data.north.value : this.north,
+      east: data.east.present ? data.east.value : this.east,
+      minZoom: data.minZoom.present ? data.minZoom.value : this.minZoom,
+      maxZoom: data.maxZoom.present ? data.maxZoom.value : this.maxZoom,
+      tileSource: data.tileSource.present
+          ? data.tileSource.value
+          : this.tileSource,
+      tileCount: data.tileCount.present ? data.tileCount.value : this.tileCount,
+      bytes: data.bytes.present ? data.bytes.value : this.bytes,
+      parcelCount: data.parcelCount.present
+          ? data.parcelCount.value
+          : this.parcelCount,
+      complete: data.complete.present ? data.complete.value : this.complete,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OfflineArea(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('south: $south, ')
+          ..write('west: $west, ')
+          ..write('north: $north, ')
+          ..write('east: $east, ')
+          ..write('minZoom: $minZoom, ')
+          ..write('maxZoom: $maxZoom, ')
+          ..write('tileSource: $tileSource, ')
+          ..write('tileCount: $tileCount, ')
+          ..write('bytes: $bytes, ')
+          ..write('parcelCount: $parcelCount, ')
+          ..write('complete: $complete, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    name,
+    south,
+    west,
+    north,
+    east,
+    minZoom,
+    maxZoom,
+    tileSource,
+    tileCount,
+    bytes,
+    parcelCount,
+    complete,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OfflineArea &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.south == this.south &&
+          other.west == this.west &&
+          other.north == this.north &&
+          other.east == this.east &&
+          other.minZoom == this.minZoom &&
+          other.maxZoom == this.maxZoom &&
+          other.tileSource == this.tileSource &&
+          other.tileCount == this.tileCount &&
+          other.bytes == this.bytes &&
+          other.parcelCount == this.parcelCount &&
+          other.complete == this.complete &&
+          other.updatedAt == this.updatedAt);
+}
+
+class OfflineAreasCompanion extends UpdateCompanion<OfflineArea> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<double> south;
+  final Value<double> west;
+  final Value<double> north;
+  final Value<double> east;
+  final Value<int> minZoom;
+  final Value<int> maxZoom;
+  final Value<String?> tileSource;
+  final Value<int> tileCount;
+  final Value<int> bytes;
+  final Value<int> parcelCount;
+  final Value<bool> complete;
+  final Value<DateTime> updatedAt;
+  const OfflineAreasCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.south = const Value.absent(),
+    this.west = const Value.absent(),
+    this.north = const Value.absent(),
+    this.east = const Value.absent(),
+    this.minZoom = const Value.absent(),
+    this.maxZoom = const Value.absent(),
+    this.tileSource = const Value.absent(),
+    this.tileCount = const Value.absent(),
+    this.bytes = const Value.absent(),
+    this.parcelCount = const Value.absent(),
+    this.complete = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  OfflineAreasCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required double south,
+    required double west,
+    required double north,
+    required double east,
+    required int minZoom,
+    required int maxZoom,
+    this.tileSource = const Value.absent(),
+    this.tileCount = const Value.absent(),
+    this.bytes = const Value.absent(),
+    this.parcelCount = const Value.absent(),
+    this.complete = const Value.absent(),
+    required DateTime updatedAt,
+  }) : name = Value(name),
+       south = Value(south),
+       west = Value(west),
+       north = Value(north),
+       east = Value(east),
+       minZoom = Value(minZoom),
+       maxZoom = Value(maxZoom),
+       updatedAt = Value(updatedAt);
+  static Insertable<OfflineArea> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<double>? south,
+    Expression<double>? west,
+    Expression<double>? north,
+    Expression<double>? east,
+    Expression<int>? minZoom,
+    Expression<int>? maxZoom,
+    Expression<String>? tileSource,
+    Expression<int>? tileCount,
+    Expression<int>? bytes,
+    Expression<int>? parcelCount,
+    Expression<bool>? complete,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (south != null) 'south': south,
+      if (west != null) 'west': west,
+      if (north != null) 'north': north,
+      if (east != null) 'east': east,
+      if (minZoom != null) 'min_zoom': minZoom,
+      if (maxZoom != null) 'max_zoom': maxZoom,
+      if (tileSource != null) 'tile_source': tileSource,
+      if (tileCount != null) 'tile_count': tileCount,
+      if (bytes != null) 'bytes': bytes,
+      if (parcelCount != null) 'parcel_count': parcelCount,
+      if (complete != null) 'complete': complete,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  OfflineAreasCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<double>? south,
+    Value<double>? west,
+    Value<double>? north,
+    Value<double>? east,
+    Value<int>? minZoom,
+    Value<int>? maxZoom,
+    Value<String?>? tileSource,
+    Value<int>? tileCount,
+    Value<int>? bytes,
+    Value<int>? parcelCount,
+    Value<bool>? complete,
+    Value<DateTime>? updatedAt,
+  }) {
+    return OfflineAreasCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      south: south ?? this.south,
+      west: west ?? this.west,
+      north: north ?? this.north,
+      east: east ?? this.east,
+      minZoom: minZoom ?? this.minZoom,
+      maxZoom: maxZoom ?? this.maxZoom,
+      tileSource: tileSource ?? this.tileSource,
+      tileCount: tileCount ?? this.tileCount,
+      bytes: bytes ?? this.bytes,
+      parcelCount: parcelCount ?? this.parcelCount,
+      complete: complete ?? this.complete,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (south.present) {
+      map['south'] = Variable<double>(south.value);
+    }
+    if (west.present) {
+      map['west'] = Variable<double>(west.value);
+    }
+    if (north.present) {
+      map['north'] = Variable<double>(north.value);
+    }
+    if (east.present) {
+      map['east'] = Variable<double>(east.value);
+    }
+    if (minZoom.present) {
+      map['min_zoom'] = Variable<int>(minZoom.value);
+    }
+    if (maxZoom.present) {
+      map['max_zoom'] = Variable<int>(maxZoom.value);
+    }
+    if (tileSource.present) {
+      map['tile_source'] = Variable<String>(tileSource.value);
+    }
+    if (tileCount.present) {
+      map['tile_count'] = Variable<int>(tileCount.value);
+    }
+    if (bytes.present) {
+      map['bytes'] = Variable<int>(bytes.value);
+    }
+    if (parcelCount.present) {
+      map['parcel_count'] = Variable<int>(parcelCount.value);
+    }
+    if (complete.present) {
+      map['complete'] = Variable<bool>(complete.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OfflineAreasCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('south: $south, ')
+          ..write('west: $west, ')
+          ..write('north: $north, ')
+          ..write('east: $east, ')
+          ..write('minZoom: $minZoom, ')
+          ..write('maxZoom: $maxZoom, ')
+          ..write('tileSource: $tileSource, ')
+          ..write('tileCount: $tileCount, ')
+          ..write('bytes: $bytes, ')
+          ..write('parcelCount: $parcelCount, ')
+          ..write('complete: $complete, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $SurveysTable surveys = $SurveysTable(this);
   late final $NodesTable nodes = $NodesTable(this);
+  late final $RegisteredParcelsTable registeredParcels =
+      $RegisteredParcelsTable(this);
+  late final $OfflineAreasTable offlineAreas = $OfflineAreasTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [surveys, nodes];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    surveys,
+    nodes,
+    registeredParcels,
+    offlineAreas,
+  ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
     WritePropagation(
@@ -2150,6 +3551,685 @@ typedef $$NodesTableProcessedTableManager =
       Node,
       PrefetchHooks Function({bool surveyId})
     >;
+typedef $$RegisteredParcelsTableCreateCompanionBuilder =
+    RegisteredParcelsCompanion Function({
+      required String id,
+      required String titleDeedNo,
+      required String ownerName,
+      required String status,
+      required String ringJson,
+      required double south,
+      required double west,
+      required double north,
+      required double east,
+      required DateTime fetchedAt,
+      Value<int> rowid,
+    });
+typedef $$RegisteredParcelsTableUpdateCompanionBuilder =
+    RegisteredParcelsCompanion Function({
+      Value<String> id,
+      Value<String> titleDeedNo,
+      Value<String> ownerName,
+      Value<String> status,
+      Value<String> ringJson,
+      Value<double> south,
+      Value<double> west,
+      Value<double> north,
+      Value<double> east,
+      Value<DateTime> fetchedAt,
+      Value<int> rowid,
+    });
+
+class $$RegisteredParcelsTableFilterComposer
+    extends Composer<_$AppDatabase, $RegisteredParcelsTable> {
+  $$RegisteredParcelsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get titleDeedNo => $composableBuilder(
+    column: $table.titleDeedNo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerName => $composableBuilder(
+    column: $table.ownerName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ringJson => $composableBuilder(
+    column: $table.ringJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get south => $composableBuilder(
+    column: $table.south,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get west => $composableBuilder(
+    column: $table.west,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get north => $composableBuilder(
+    column: $table.north,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get east => $composableBuilder(
+    column: $table.east,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RegisteredParcelsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RegisteredParcelsTable> {
+  $$RegisteredParcelsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get titleDeedNo => $composableBuilder(
+    column: $table.titleDeedNo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ownerName => $composableBuilder(
+    column: $table.ownerName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ringJson => $composableBuilder(
+    column: $table.ringJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get south => $composableBuilder(
+    column: $table.south,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get west => $composableBuilder(
+    column: $table.west,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get north => $composableBuilder(
+    column: $table.north,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get east => $composableBuilder(
+    column: $table.east,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RegisteredParcelsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RegisteredParcelsTable> {
+  $$RegisteredParcelsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get titleDeedNo => $composableBuilder(
+    column: $table.titleDeedNo,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ownerName =>
+      $composableBuilder(column: $table.ownerName, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get ringJson =>
+      $composableBuilder(column: $table.ringJson, builder: (column) => column);
+
+  GeneratedColumn<double> get south =>
+      $composableBuilder(column: $table.south, builder: (column) => column);
+
+  GeneratedColumn<double> get west =>
+      $composableBuilder(column: $table.west, builder: (column) => column);
+
+  GeneratedColumn<double> get north =>
+      $composableBuilder(column: $table.north, builder: (column) => column);
+
+  GeneratedColumn<double> get east =>
+      $composableBuilder(column: $table.east, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$RegisteredParcelsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RegisteredParcelsTable,
+          RegisteredParcel,
+          $$RegisteredParcelsTableFilterComposer,
+          $$RegisteredParcelsTableOrderingComposer,
+          $$RegisteredParcelsTableAnnotationComposer,
+          $$RegisteredParcelsTableCreateCompanionBuilder,
+          $$RegisteredParcelsTableUpdateCompanionBuilder,
+          (
+            RegisteredParcel,
+            BaseReferences<
+              _$AppDatabase,
+              $RegisteredParcelsTable,
+              RegisteredParcel
+            >,
+          ),
+          RegisteredParcel,
+          PrefetchHooks Function()
+        > {
+  $$RegisteredParcelsTableTableManager(
+    _$AppDatabase db,
+    $RegisteredParcelsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RegisteredParcelsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RegisteredParcelsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RegisteredParcelsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> titleDeedNo = const Value.absent(),
+                Value<String> ownerName = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> ringJson = const Value.absent(),
+                Value<double> south = const Value.absent(),
+                Value<double> west = const Value.absent(),
+                Value<double> north = const Value.absent(),
+                Value<double> east = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RegisteredParcelsCompanion(
+                id: id,
+                titleDeedNo: titleDeedNo,
+                ownerName: ownerName,
+                status: status,
+                ringJson: ringJson,
+                south: south,
+                west: west,
+                north: north,
+                east: east,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String titleDeedNo,
+                required String ownerName,
+                required String status,
+                required String ringJson,
+                required double south,
+                required double west,
+                required double north,
+                required double east,
+                required DateTime fetchedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => RegisteredParcelsCompanion.insert(
+                id: id,
+                titleDeedNo: titleDeedNo,
+                ownerName: ownerName,
+                status: status,
+                ringJson: ringJson,
+                south: south,
+                west: west,
+                north: north,
+                east: east,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RegisteredParcelsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RegisteredParcelsTable,
+      RegisteredParcel,
+      $$RegisteredParcelsTableFilterComposer,
+      $$RegisteredParcelsTableOrderingComposer,
+      $$RegisteredParcelsTableAnnotationComposer,
+      $$RegisteredParcelsTableCreateCompanionBuilder,
+      $$RegisteredParcelsTableUpdateCompanionBuilder,
+      (
+        RegisteredParcel,
+        BaseReferences<
+          _$AppDatabase,
+          $RegisteredParcelsTable,
+          RegisteredParcel
+        >,
+      ),
+      RegisteredParcel,
+      PrefetchHooks Function()
+    >;
+typedef $$OfflineAreasTableCreateCompanionBuilder =
+    OfflineAreasCompanion Function({
+      Value<int> id,
+      required String name,
+      required double south,
+      required double west,
+      required double north,
+      required double east,
+      required int minZoom,
+      required int maxZoom,
+      Value<String?> tileSource,
+      Value<int> tileCount,
+      Value<int> bytes,
+      Value<int> parcelCount,
+      Value<bool> complete,
+      required DateTime updatedAt,
+    });
+typedef $$OfflineAreasTableUpdateCompanionBuilder =
+    OfflineAreasCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<double> south,
+      Value<double> west,
+      Value<double> north,
+      Value<double> east,
+      Value<int> minZoom,
+      Value<int> maxZoom,
+      Value<String?> tileSource,
+      Value<int> tileCount,
+      Value<int> bytes,
+      Value<int> parcelCount,
+      Value<bool> complete,
+      Value<DateTime> updatedAt,
+    });
+
+class $$OfflineAreasTableFilterComposer
+    extends Composer<_$AppDatabase, $OfflineAreasTable> {
+  $$OfflineAreasTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get south => $composableBuilder(
+    column: $table.south,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get west => $composableBuilder(
+    column: $table.west,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get north => $composableBuilder(
+    column: $table.north,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get east => $composableBuilder(
+    column: $table.east,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minZoom => $composableBuilder(
+    column: $table.minZoom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxZoom => $composableBuilder(
+    column: $table.maxZoom,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tileSource => $composableBuilder(
+    column: $table.tileSource,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tileCount => $composableBuilder(
+    column: $table.tileCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get parcelCount => $composableBuilder(
+    column: $table.parcelCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get complete => $composableBuilder(
+    column: $table.complete,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OfflineAreasTableOrderingComposer
+    extends Composer<_$AppDatabase, $OfflineAreasTable> {
+  $$OfflineAreasTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get south => $composableBuilder(
+    column: $table.south,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get west => $composableBuilder(
+    column: $table.west,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get north => $composableBuilder(
+    column: $table.north,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get east => $composableBuilder(
+    column: $table.east,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minZoom => $composableBuilder(
+    column: $table.minZoom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maxZoom => $composableBuilder(
+    column: $table.maxZoom,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tileSource => $composableBuilder(
+    column: $table.tileSource,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tileCount => $composableBuilder(
+    column: $table.tileCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get parcelCount => $composableBuilder(
+    column: $table.parcelCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get complete => $composableBuilder(
+    column: $table.complete,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OfflineAreasTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OfflineAreasTable> {
+  $$OfflineAreasTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<double> get south =>
+      $composableBuilder(column: $table.south, builder: (column) => column);
+
+  GeneratedColumn<double> get west =>
+      $composableBuilder(column: $table.west, builder: (column) => column);
+
+  GeneratedColumn<double> get north =>
+      $composableBuilder(column: $table.north, builder: (column) => column);
+
+  GeneratedColumn<double> get east =>
+      $composableBuilder(column: $table.east, builder: (column) => column);
+
+  GeneratedColumn<int> get minZoom =>
+      $composableBuilder(column: $table.minZoom, builder: (column) => column);
+
+  GeneratedColumn<int> get maxZoom =>
+      $composableBuilder(column: $table.maxZoom, builder: (column) => column);
+
+  GeneratedColumn<String> get tileSource => $composableBuilder(
+    column: $table.tileSource,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get tileCount =>
+      $composableBuilder(column: $table.tileCount, builder: (column) => column);
+
+  GeneratedColumn<int> get bytes =>
+      $composableBuilder(column: $table.bytes, builder: (column) => column);
+
+  GeneratedColumn<int> get parcelCount => $composableBuilder(
+    column: $table.parcelCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get complete =>
+      $composableBuilder(column: $table.complete, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$OfflineAreasTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OfflineAreasTable,
+          OfflineArea,
+          $$OfflineAreasTableFilterComposer,
+          $$OfflineAreasTableOrderingComposer,
+          $$OfflineAreasTableAnnotationComposer,
+          $$OfflineAreasTableCreateCompanionBuilder,
+          $$OfflineAreasTableUpdateCompanionBuilder,
+          (
+            OfflineArea,
+            BaseReferences<_$AppDatabase, $OfflineAreasTable, OfflineArea>,
+          ),
+          OfflineArea,
+          PrefetchHooks Function()
+        > {
+  $$OfflineAreasTableTableManager(_$AppDatabase db, $OfflineAreasTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OfflineAreasTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OfflineAreasTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OfflineAreasTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<double> south = const Value.absent(),
+                Value<double> west = const Value.absent(),
+                Value<double> north = const Value.absent(),
+                Value<double> east = const Value.absent(),
+                Value<int> minZoom = const Value.absent(),
+                Value<int> maxZoom = const Value.absent(),
+                Value<String?> tileSource = const Value.absent(),
+                Value<int> tileCount = const Value.absent(),
+                Value<int> bytes = const Value.absent(),
+                Value<int> parcelCount = const Value.absent(),
+                Value<bool> complete = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => OfflineAreasCompanion(
+                id: id,
+                name: name,
+                south: south,
+                west: west,
+                north: north,
+                east: east,
+                minZoom: minZoom,
+                maxZoom: maxZoom,
+                tileSource: tileSource,
+                tileCount: tileCount,
+                bytes: bytes,
+                parcelCount: parcelCount,
+                complete: complete,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required double south,
+                required double west,
+                required double north,
+                required double east,
+                required int minZoom,
+                required int maxZoom,
+                Value<String?> tileSource = const Value.absent(),
+                Value<int> tileCount = const Value.absent(),
+                Value<int> bytes = const Value.absent(),
+                Value<int> parcelCount = const Value.absent(),
+                Value<bool> complete = const Value.absent(),
+                required DateTime updatedAt,
+              }) => OfflineAreasCompanion.insert(
+                id: id,
+                name: name,
+                south: south,
+                west: west,
+                north: north,
+                east: east,
+                minZoom: minZoom,
+                maxZoom: maxZoom,
+                tileSource: tileSource,
+                tileCount: tileCount,
+                bytes: bytes,
+                parcelCount: parcelCount,
+                complete: complete,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OfflineAreasTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OfflineAreasTable,
+      OfflineArea,
+      $$OfflineAreasTableFilterComposer,
+      $$OfflineAreasTableOrderingComposer,
+      $$OfflineAreasTableAnnotationComposer,
+      $$OfflineAreasTableCreateCompanionBuilder,
+      $$OfflineAreasTableUpdateCompanionBuilder,
+      (
+        OfflineArea,
+        BaseReferences<_$AppDatabase, $OfflineAreasTable, OfflineArea>,
+      ),
+      OfflineArea,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2158,4 +4238,8 @@ class $AppDatabaseManager {
       $$SurveysTableTableManager(_db, _db.surveys);
   $$NodesTableTableManager get nodes =>
       $$NodesTableTableManager(_db, _db.nodes);
+  $$RegisteredParcelsTableTableManager get registeredParcels =>
+      $$RegisteredParcelsTableTableManager(_db, _db.registeredParcels);
+  $$OfflineAreasTableTableManager get offlineAreas =>
+      $$OfflineAreasTableTableManager(_db, _db.offlineAreas);
 }

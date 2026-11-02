@@ -101,10 +101,14 @@ flutter run                           # iOS simulator reaches the API at localho
 flutter run --dart-define=CADASTRA_API_URL=http://192.168.1.20:8000   # physical device
 # Release builds: point at the deployed API and a production basemap
 flutter build apk --dart-define=CADASTRA_API_URL=https://api.registry.example.gov.gh \
-  --dart-define=BASEMAP_URL='https://tiles.example.com/{z}/{x}/{y}.png' --dart-define=BASEMAP_ATTRIBUTION='© …'
+  --dart-define=BASEMAP_URL='https://tiles.example.com/{z}/{x}/{y}.png' --dart-define=BASEMAP_ATTRIBUTION='© …' \
+  --dart-define=BASEMAP_OFFLINE=true   # only if the provider's terms allow saving tiles
 
 # Live end-to-end test (needs the Core Engine running and seeded):
 flutter test integration_test/field_survey_test.dart -d <simulator-id>
+# Offline areas, against any tile server that permits bulk download:
+flutter test integration_test/offline_maps_test.dart -d <simulator-id> \
+  --dart-define=BASEMAP_URL='http://localhost:8091/{z}/{x}/{y}.png' --dart-define=BASEMAP_OFFLINE=true
 ```
 
 - **Corner mode** averages ~3 s of fixes per corner (inverse-variance weighted); **Walk mode** drops a node every
@@ -118,6 +122,14 @@ flutter test integration_test/field_survey_test.dart -d <simulator-id>
   Capture needs no network or live session; if the session ends, surveys stay queued and the app asks the surveyor
   to sign in again. Surveys belong to the account that captured them, so shared devices never upload one
   surveyor's work under another's name.
+- Approved and pending parcels around the surveyor are downloaded whenever the device is online and kept on the
+  device. They are drawn on the capture map (approved solid, pending dashed), and the boundary is checked against
+  them as it is captured: the surveyor sees "Inside approved GA/EL/1005 by 0.8 m" on site, and Finish warns before
+  submitting a boundary the registry cannot approve. The Core Engine still measures the exact overlap on upload.
+- **Offline maps** (account menu) saves an area (1, 2 or 4 km square) before leaving signal: its registered parcels
+  always, and basemap tiles for zoom 13–19 when `BASEMAP_OFFLINE=true`. Saved tiles live in application support
+  storage, which the OS does not purge, and are read before the network. OpenStreetMap's public servers forbid bulk
+  download, so tile saving stays off for them whatever the flag says.
 - GPS comes through a `PositionSource` interface; an external RTK receiver can be added as another implementation.
 - Debug builds allow plain HTTP to a local API (iOS `NSAllowsLocalNetworking`, Android debug manifest only).
 

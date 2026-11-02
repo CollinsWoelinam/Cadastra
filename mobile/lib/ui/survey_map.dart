@@ -4,7 +4,9 @@ import 'package:latlong2/latlong.dart';
 
 import '../app.dart';
 import '../config.dart';
+import '../data/db.dart';
 import '../location/position_source.dart';
+import '../map/offline_tile_provider.dart';
 
 const _accra = LatLng(5.6037, -0.1870);
 
@@ -15,8 +17,22 @@ class SurveyMap extends StatelessWidget {
   final Fix? position;
   final VoidCallback? onMapReady;
 
-  const SurveyMap(
-      {super.key, this.controller, required this.boundary, this.conflicts = const [], this.position, this.onMapReady});
+  /// Registered parcels around the survey, drawn beneath it.
+  final List<RegisteredParcel> neighbours;
+
+  /// Ids of [neighbours] the boundary overlaps; outlined in red.
+  final Set<String> encroached;
+
+  const SurveyMap({
+    super.key,
+    this.controller,
+    required this.boundary,
+    this.conflicts = const [],
+    this.position,
+    this.onMapReady,
+    this.neighbours = const [],
+    this.encroached = const {},
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +49,10 @@ class SurveyMap extends StatelessWidget {
             : null,
       ),
       children: [
-        if (Services.of(context).showBasemap)
-          TileLayer(
-            urlTemplate: basemapUrl,
-            userAgentPackageName: 'com.cadastra.cadastra_field',
-            maxNativeZoom: 19,
-          ),
+        if (Services.of(context).showBasemap) const BasemapLayer(),
+        PolygonLayer(polygons: [
+          for (final p in neighbours) _neighbourPolygon(p, encroached.contains(p.id)),
+        ]),
         PolygonLayer(polygons: [
           if (boundary.length >= 3)
             Polygon(points: boundary, color: blue.withValues(alpha: 0.15), borderColor: blue, borderStrokeWidth: 3),
@@ -79,19 +93,63 @@ class SurveyMap extends StatelessWidget {
               ),
             ),
         ]),
-        // flutter_map's SimpleAttributionWidget overflows on phone-width maps.
-        if (Services.of(context).showBasemap)
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              color: Colors.white70,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: const Text(basemapAttribution, style: TextStyle(fontSize: 10)),
-            ),
-          ),
+        if (Services.of(context).showBasemap) const BasemapAttribution(),
       ],
     );
   }
+
+  static Polygon _neighbourPolygon(RegisteredParcel p, bool encroached) {
+    final approved = p.status == 'APPROVED';
+    final tone = approved ? const Color(0xFF334155) : Colors.orange.shade800;
+    return Polygon(
+      points: p.ring,
+      color: tone.withValues(alpha: approved ? 0.10 : 0.06),
+      borderColor: encroached ? Colors.red.shade700 : tone,
+      borderStrokeWidth: encroached ? 2.5 : 1.2,
+      pattern: approved ? const StrokePattern.solid() : StrokePattern.dashed(segments: const [6, 4]),
+      label: p.titleDeedNo,
+      labelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: encroached ? Colors.red.shade900 : tone),
+    );
+  }
+}
+
+/// The basemap, served from tiles saved on the device first where there are any.
+class BasemapLayer extends StatefulWidget {
+  const BasemapLayer({super.key});
+
+  @override
+  State<BasemapLayer> createState() => _BasemapLayerState();
+}
+
+class _BasemapLayerState extends State<BasemapLayer> {
+  // One provider for the layer's lifetime; TileLayer disposes it with itself.
+  late final TileProvider _provider = switch (Services.read(context).tileStore) {
+    final store? => OfflineFirstTileProvider(store),
+    null => NetworkTileProvider(),
+  };
+
+  @override
+  Widget build(BuildContext context) => TileLayer(
+        urlTemplate: basemapUrl,
+        userAgentPackageName: 'com.cadastra.cadastra_field',
+        maxNativeZoom: 19,
+        tileProvider: _provider,
+      );
+}
+
+/// flutter_map's SimpleAttributionWidget overflows on phone-width maps.
+class BasemapAttribution extends StatelessWidget {
+  const BasemapAttribution({super.key});
+
+  @override
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.bottomRight,
+        child: Container(
+          color: Colors.white70,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: const Text(basemapAttribution, style: TextStyle(fontSize: 10)),
+        ),
+      );
 }
 
 class _NodeLabel extends StatelessWidget {

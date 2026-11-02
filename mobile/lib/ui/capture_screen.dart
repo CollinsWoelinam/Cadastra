@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../app.dart';
 import '../data/db.dart';
+import '../geo/encroachment.dart';
+import '../geo/polygon_math.dart';
+import '../geo/tiles.dart';
 import '../services/capture_controller.dart';
 import 'format.dart';
 import 'survey_map.dart';
@@ -24,6 +30,15 @@ class _CaptureScreenState extends State<CaptureScreen> {
   bool _follow = true;
   Survey? _survey;
 
+  // Registered parcels within ~1.5 km, re-centred if the surveyor moves 1 km away.
+  static const _areaRadiusM = 1500.0;
+  LatLng? _areaCentre;
+  StreamSubscription<List<RegisteredParcel>>? _neighbourSub;
+  List<RegisteredParcel> _neighbours = const [];
+
+  /// Null until the first refresh finishes; false if the registry was unreachable.
+  bool? _neighboursLive;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +52,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   @override
   void dispose() {
+    _neighbourSub?.cancel();
     capture
       ..removeListener(_onCaptureChanged)
       ..dispose();
@@ -47,6 +63,32 @@ class _CaptureScreenState extends State<CaptureScreen> {
   void _onCaptureChanged() {
     final fix = capture.lastFix;
     if (_follow && _mapReady && fix != null) _map.move(fix.position, _map.camera.zoom);
+    final here = capture.nodes.isNotEmpty ? capture.nodes.last.position : fix?.position;
+    if (here != null && (_areaCentre == null || PolygonMath.distance(_areaCentre!, here) > 1000)) _watchArea(here);
+  }
+
+  void _watchArea(LatLng centre) {
+    final services = Services.read(context);
+    _areaCentre = centre;
+    final area = GeoBounds.around(centre, _areaRadiusM);
+    _neighbourSub?.cancel();
+    _neighbourSub = services.db.watchRegisteredParcelsIn(area).listen((parcels) {
+      if (!mounted) return;
+      // A resubmitted survey must not be compared with its own earlier upload.
+      setState(() => _neighbours = [for (final p in parcels) if (p.id != _survey?.serverParcelId) p]);
+    });
+    services.neighbours.refresh(area).then((n) => mounted ? setState(() => _neighboursLive = n != null) : null);
+  }
+
+  String? get _neighbourNote {
+    final n = _neighbours.length;
+    final parcels = '$n registered parcel${n == 1 ? '' : 's'}';
+    return switch (_neighboursLive) {
+      null when n == 0 => null,
+      false when n == 0 => 'Offline — no registered parcels saved for this area',
+      false => 'Offline — showing $parcels saved on this device',
+      _ => n == 0 ? 'No registered parcels nearby' : '$parcels nearby',
+    };
   }
 
   void _snack(String message) =>
@@ -58,12 +100,25 @@ class _CaptureScreenState extends State<CaptureScreen> {
   }
 
   Future<void> _finish() async {
+    final blocking = findEncroachments(capture.ring, _neighbours).where((e) => e.blocking).toList();
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Finish survey?'),
-        content: Text('${capture.nodes.length} corners · ${formatArea(capture.areaSqm)}\n'
-            'The boundary will be uploaded for validation as soon as the device is online.'),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('${capture.nodes.length} corners · ${formatArea(capture.areaSqm)}\n'
+              'The boundary will be uploaded for validation as soon as the device is online.'),
+          if (blocking.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'It overlaps approved parcel${blocking.length == 1 ? '' : 's'} '
+              '${blocking.map((e) => e.parcel.titleDeedNo).join(', ')}, so the registry cannot approve it as is. '
+              'If that is GPS error along a shared boundary, re-take those corners first.',
+              key: const Key('finish-overlap-warning'),
+              style: TextStyle(color: Colors.red.shade800, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep surveying')),
           FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Finish')),
@@ -89,21 +144,31 @@ class _CaptureScreenState extends State<CaptureScreen> {
       ),
       body: ListenableBuilder(
         listenable: capture,
-        builder: (context, _) => Stack(children: [
-          Positioned.fill(
-            child: Listener(
-              // Panning by hand stops the map following the GPS.
-              onPointerMove: (_) => _follow ? setState(() => _follow = false) : null,
-              child: SurveyMap(
-                controller: _map,
-                boundary: capture.ring,
-                position: capture.lastFix,
-                onMapReady: () => _mapReady = true,
+        builder: (context, _) {
+          final encroachments = findEncroachments(capture.ring, _neighbours);
+          return Stack(children: [
+            Positioned.fill(
+              child: Listener(
+                // Panning by hand stops the map following the GPS.
+                onPointerMove: (_) => _follow ? setState(() => _follow = false) : null,
+                child: SurveyMap(
+                  controller: _map,
+                  boundary: capture.ring,
+                  position: capture.lastFix,
+                  onMapReady: () => _mapReady = true,
+                  neighbours: _neighbours,
+                  encroached: {for (final e in encroachments) e.parcel.id},
+                ),
               ),
             ),
-          ),
-          Positioned(left: 12, right: 12, top: 12, child: _StatusPanel(capture)),
-        ]),
+            Positioned(
+              left: 12,
+              right: 12,
+              top: 12,
+              child: _StatusPanel(capture, encroachments: encroachments, neighbourNote: _neighbourNote),
+            ),
+          ]);
+        },
       ),
       // As Scaffold slots (not Stack children) these keep snackbars from covering them.
       floatingActionButton: FloatingActionButton.small(
@@ -216,8 +281,17 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
 class _StatusPanel extends StatelessWidget {
   final CaptureController capture;
+  final List<Encroachment> encroachments;
+  final String? neighbourNote;
 
-  const _StatusPanel(this.capture);
+  const _StatusPanel(this.capture, {required this.encroachments, this.neighbourNote});
+
+  static String _describe(Encroachment e) {
+    final what = e.blocking ? 'approved' : 'pending';
+    final d = e.depthM;
+    if (d == 0) return 'Crosses $what ${e.parcel.titleDeedNo}';
+    return 'Inside $what ${e.parcel.titleDeedNo} by ${d < 1 ? '${(d * 100).round()} cm' : '${d.toStringAsFixed(1)} m'}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -255,8 +329,27 @@ class _StatusPanel extends StatelessWidget {
               padding: EdgeInsets.only(top: 6),
               child: Text('Boundary lines cross — undo the last corners.', style: TextStyle(color: Colors.red)),
             ),
+          // Kept short: the panel sits over the map the surveyor is following.
+          for (final (i, e) in encroachments.take(2).indexed)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                _describe(e),
+                key: i == 0 ? const Key('encroachment') : null,
+                style: TextStyle(color: e.blocking ? Colors.red.shade700 : Colors.orange.shade900, fontWeight: FontWeight.w600),
+              ),
+            ),
+          if (encroachments.length > 2)
+            Text('and ${encroachments.length - 2} more overlap${encroachments.length == 3 ? '' : 's'}',
+                style: TextStyle(color: Colors.red.shade700)),
           if (capture.storageError != null)
             Text(capture.storageError!, style: const TextStyle(color: Colors.red)),
+          if (neighbourNote != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(neighbourNote!, key: const Key('neighbours'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54)),
+            ),
         ]),
       ),
     );

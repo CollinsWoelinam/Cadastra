@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../auth/session.dart';
 import '../data/db.dart';
+import '../geo/tiles.dart';
 
 /// The Core Engine refused the request; retrying unchanged will not help.
 class RejectedException implements Exception {
@@ -52,6 +53,13 @@ class ApiClient {
       await _send('GET', '/parcels/$id') as Map<String, dynamic>;
 
   Future<List<dynamic>> conflicts(String id) async => await _send('GET', '/parcels/$id/conflicts') as List<dynamic>;
+
+  /// GeoJSON features for parcels whose bounding box meets [area].
+  Future<List<Map<String, dynamic>>> parcelsIn(GeoBounds area, {required int limit}) async {
+    final bbox = [area.west, area.south, area.east, area.north].join(',');
+    final fc = await _send('GET', '/parcels?bbox=$bbox&limit=$limit') as Map<String, dynamic>;
+    return (fc['features'] as List).cast<Map<String, dynamic>>();
+  }
 
   Future<dynamic> _send(String method, String path, [Object? json]) async {
     Future<http.Response> attempt(String token) async {

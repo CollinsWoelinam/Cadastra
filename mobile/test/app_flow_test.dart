@@ -28,8 +28,19 @@ void main() {
         'overlap_geometry': {'type': 'Polygon', 'coordinates': [[[-0.17, 5.624], [-0.1699, 5.624], [-0.1699, 5.6241], [-0.17, 5.624]]]},
       },
     ];
+    // An approved neighbour reaching ~8 m into the rectangle walked below.
+    final neighbour = [offset(22, -10), offset(45, -10), offset(45, 20), offset(22, 20), offset(22, -10)];
     final core = FakeCore()
       ..handler = (req) async {
+        if (req.method == 'GET' && req.url.path == '/parcels') {
+          return http.Response(jsonEncode({'type': 'FeatureCollection', 'features': [
+            {
+              'type': 'Feature',
+              'geometry': {'type': 'Polygon', 'coordinates': [[for (final p in neighbour) [p.longitude, p.latitude]]]},
+              'properties': {'id': 'n-1', 'title_deed_no': 'GA/EL/1005', 'owner_name': 'Efua Addo', 'status': 'APPROVED'},
+            },
+          ]}), 200);
+        }
         if (req.method == 'POST') {
           uploaded = jsonDecode(req.body) as Map<String, dynamic>;
           return http.Response(jsonEncode({'parcel': {'id': 'p-9', 'status': 'PENDING'}, 'conflicts': conflicts}), 201);
@@ -81,9 +92,15 @@ void main() {
     expect(measures, matches(RegExp(r'^2\d corners · 10[67]\d\.\d m²')));
     expect(find.text('GPS ±3.0 m'), findsOneWidget);
 
-    // Finish → list, uploaded
+    // The registered neighbour was fetched for the area and the overlap is flagged on site.
+    expect(find.text('1 registered parcel nearby'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const Key('encroachment'))).data,
+        matches(RegExp(r'^Inside approved GA/EL/1005 by [6-9]\.\d m$')));
+
+    // Finish → warned about the approved neighbour → list, uploaded
     await tester.tap(find.byKey(const Key('finish')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('finish-overlap-warning')), findsOneWidget);
     await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Finish')));
     await tester.pumpAndSettle();
     expect(find.text('GA/EL/3001'), findsOneWidget);

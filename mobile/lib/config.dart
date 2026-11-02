@@ -14,3 +14,10 @@ const String basemapUrl = String.fromEnvironment('BASEMAP_URL',
     defaultValue: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
 const String basemapAttribution =
     String.fromEnvironment('BASEMAP_ATTRIBUTION', defaultValue: '© OpenStreetMap contributors');
+
+/// Whether the basemap provider permits saving tiles for offline use. Bulk download
+/// from OpenStreetMap's public servers is forbidden by their tile usage policy, so
+/// this stays off for them regardless; set --dart-define=BASEMAP_OFFLINE=true only
+/// for a provider whose terms allow it.
+const bool basemapAllowsOfflineDownload =
+    bool.fromEnvironment('BASEMAP_OFFLINE') && !(basemapUrl == 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');

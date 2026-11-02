@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'auth/session.dart';
 import 'data/db.dart';
 import 'location/position_source.dart';
+import 'map/tile_store.dart';
+import 'services/neighbour_service.dart';
+import 'services/offline_maps.dart';
 import 'services/sync_service.dart';
 import 'ui/login_screen.dart';
 import 'ui/surveys_screen.dart';
@@ -16,12 +19,19 @@ class AppServices {
   /// Off in widget tests, which have no network for map tiles.
   final bool showBasemap;
 
+  /// Basemap tiles saved on the device; null where tiles may not be saved.
+  final TileStore? tileStore;
+
+  late final NeighbourService neighbours = NeighbourService(db, sync.api);
+  late final OfflineMaps offlineMaps = OfflineMaps(db, neighbours, tileStore);
+
   AppServices({
     required this.db,
     required this.session,
     required this.sync,
     required this.positionSource,
     this.showBasemap = true,
+    this.tileStore,
   });
 }
 

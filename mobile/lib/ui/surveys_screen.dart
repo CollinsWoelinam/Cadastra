@@ -7,6 +7,7 @@ import '../data/db.dart';
 import 'capture_screen.dart';
 import 'format.dart';
 import 'login_screen.dart';
+import 'offline_areas_screen.dart';
 import 'survey_detail_screen.dart';
 
 class SurveysScreen extends StatelessWidget {
@@ -217,9 +218,15 @@ class _AccountMenu extends StatelessWidget {
     return PopupMenuButton<String>(
       tooltip: 'Account',
       icon: const Icon(Icons.account_circle),
-      onSelected: (_) => _signOut(context),
+      onSelected: (action) => action == 'offline'
+          ? Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OfflineAreasScreen()))
+          : _signOut(context),
       itemBuilder: (_) => [
         PopupMenuItem(enabled: false, child: Text('${user.fullName}\n${user.email}')),
+        const PopupMenuItem(
+          value: 'offline',
+          child: ListTile(leading: Icon(Icons.download_for_offline), title: Text('Offline maps'), contentPadding: EdgeInsets.zero),
+        ),
         const PopupMenuItem(value: 'logout', child: Text('Sign out')),
       ],
     );

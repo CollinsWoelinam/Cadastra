@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../app.dart';
 import '../data/db.dart';
+import '../geo/tiles.dart';
 import 'format.dart';
 import 'survey_map.dart';
 import 'surveys_screen.dart';
@@ -18,6 +19,20 @@ class SurveyDetailScreen extends StatefulWidget {
 
 class _SurveyDetailScreenState extends State<SurveyDetailScreen> {
   late final Future<List<Node>> _nodes = Services.read(context).db.nodesOf(widget.surveyId);
+  Stream<List<RegisteredParcel>>? _neighbours;
+
+  @override
+  void initState() {
+    super.initState();
+    _nodes.then((nodes) {
+      if (nodes.isEmpty || !mounted) return;
+      final services = Services.read(context);
+      final b = GeoBounds.of([for (final n in nodes) LatLng(n.lat, n.lon)]);
+      final area = GeoBounds.around(b.centre, 300).expand(b);
+      setState(() => _neighbours = services.db.watchRegisteredParcelsIn(area));
+      services.neighbours.refresh(area);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +63,17 @@ class _SurveyDetailScreenState extends State<SurveyDetailScreen> {
                   SizedBox(
                     height: 300,
                     child: nodes.hasData
-                        ? SurveyMap(boundary: ring, conflicts: [for (final c in conflicts) ...c.rings])
+                        ? StreamBuilder<List<RegisteredParcel>>(
+                            stream: _neighbours,
+                            builder: (context, neighbours) => SurveyMap(
+                              boundary: ring,
+                              conflicts: [for (final c in conflicts) ...c.rings],
+                              neighbours: [
+                                for (final p in neighbours.data ?? <RegisteredParcel>[])
+                                  if (p.id != survey.serverParcelId) p,
+                              ],
+                            ),
+                          )
                         : const Center(child: CircularProgressIndicator()),
                   ),
                   Container(
