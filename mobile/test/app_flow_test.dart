@@ -97,6 +97,16 @@ void main() {
     expect(tester.widget<Text>(find.byKey(const Key('encroachment'))).data,
         matches(RegExp(r'^Inside approved GA/EL/1005 by [6-9]\.\d m$')));
 
+    // The panel folds to one line over the map, but the overlap stays visible.
+    await tester.tap(find.byKey(const Key('status-panel')));
+    await tester.pump();
+    expect(find.byKey(const Key('encroachment')), findsNothing);
+    expect(tester.widget<Text>(find.byKey(const Key('status-summary'))).textSpan!.toPlainText(),
+        matches(RegExp(r'^2\d corners · .* · 1 overlap · closed$')));
+    await tester.tap(find.byKey(const Key('status-panel')));
+    await tester.pump();
+    expect(find.byKey(const Key('encroachment')), findsOneWidget);
+
     // Finish → warned about the approved neighbour → list, uploaded
     await tester.tap(find.byKey(const Key('finish')));
     await tester.pumpAndSettle();

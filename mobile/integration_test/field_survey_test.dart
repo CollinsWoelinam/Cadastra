@@ -111,6 +111,9 @@ void main() {
     expect(tester.widget<Text>(find.byKey(const Key('encroachment'))).data, startsWith('Inside approved GA/EL/'));
     expect(tester.widget<Text>(find.byKey(const Key('neighbours'))).data, matches(RegExp(r'^\d+ registered parcels nearby$')));
     await _checkpoint(tester, 'closed');
+    await tester.tap(find.byKey(const Key('status-panel')));
+    await _checkpoint(tester, 'collapsed');
+    await tester.tap(find.byKey(const Key('status-panel')));
 
     await tester.tap(find.byKey(const Key('finish')));
     await tester.pumpAndSettle();

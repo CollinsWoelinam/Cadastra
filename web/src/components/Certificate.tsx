@@ -115,12 +115,35 @@ export default function Certificate({ params }: { params: Promise<{ id: string }
         </table>
 
         <footer>
-          Issued {issued}. Area and distances are geodetic (WGS 84 ellipsoid). Grid coordinates are derived using
-          the standard EPSG datum transformations, which are accurate to approximately ±5–6 m; they are indicative
-          until local transformation parameters from the Survey and Mapping Division are applied.
+          Issued {issued}. Area and distances are geodetic (WGS 84 ellipsoid). {gridAccuracyNote(plan.crs)}
           {parcel.status !== "APPROVED" && " This parcel has not been approved and this document confers no rights."}
         </footer>
       </article>
     </>
   );
+}
+
+/** States how the grid coordinates were derived and how far to trust them. */
+function gridAccuracyNote(crs: SurveyPlan["crs"]): string {
+  // Grids on another datum than WGS 84; UTM needs no datum change.
+  const grids = crs.filter((c) => c.transformation.accuracy_m !== null);
+  const datum = (c: SurveyPlan["crs"][number]) => c.name.split(" / ")[0];
+  const list = (cs: SurveyPlan["crs"]) => cs.map((c) => `${datum(c)} ±${c.transformation.accuracy_m} m`).join(", ");
+  const local = grids.filter((c) => c.transformation.source !== "EPSG");
+  const epsg = grids.filter((c) => c.transformation.source === "EPSG");
+  const datums = (cs: SurveyPlan["crs"]) =>
+    `the ${cs.map(datum).join(" and ")} datum${cs.length > 1 ? "s" : ""}`;
+  const sources = [...new Set(local.map((c) => c.transformation.source))];
+  const notes = sources.map((source) => {
+    const cs = local.filter((c) => c.transformation.source === source);
+    return `Grid coordinates on ${datums(cs)} use parameters from ${source} (${list(cs)}).`;
+  });
+  if (epsg.length) {
+    notes.push(
+      `Grid coordinates${local.length ? ` on ${datums(epsg)}` : ""} use the standard EPSG datum ` +
+        `transformation${epsg.length > 1 ? "s" : ""} (${list(epsg)}) and are indicative until local ` +
+        "transformation parameters from the Survey and Mapping Division are applied.",
+    );
+  }
+  return notes.join(" ");
 }

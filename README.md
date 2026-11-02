@@ -56,7 +56,12 @@ Migrations in `backend/migrations/*.sql` are applied automatically on API start.
   boundaries that `ST_Overlaps` misses; shared edges are not conflicts.
 - `OVERLAP_TOLERANCE_SQM` (default `0`) ignores slivers below that area.
 - `parcel_events` is append-only (enforced by trigger); raw `survey_points` keep per-node accuracy.
-- WGS84 → Accra/Leigon datum transforms from the EPSG registry are only accurate to ~5–6 m.
+- Grid coordinates on survey plans need a WGS 84 → Accra / Leigon datum change. By default the most accurate
+  onshore EPSG operations are used (Accra ±6 m, Leigon ±5 m; pinned, so every plan uses the same one) and
+  certificates call the grid coordinates indicative. Local parameters from the Survey and Mapping Division are set
+  with `ACCRA_TO_WGS84` / `LEIGON_TO_WGS84` (3 or 7 values, local datum → WGS 84, as published),
+  `DATUM_ROTATION_CONVENTION` (required with rotations), `DATUM_PARAMETERS_SOURCE` and
+  `DATUM_PARAMETERS_ACCURACY_M` (both printed on the certificate). Incomplete settings stop the API at startup.
 
 ## Phase 2 — Registry Portal (`web/`)
 

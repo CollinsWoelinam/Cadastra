@@ -46,7 +46,13 @@ export interface SurveyPlan {
   parcel_id: string;
   title_deed_no: string;
   owner_name: string;
-  crs: { epsg: number; name: string; unit: string }[];
+  crs: {
+    epsg: number;
+    name: string;
+    unit: string;
+    // How WGS 84 positions are converted to this grid; accuracy_m is null without a datum change.
+    transformation: { description: string; accuracy_m: number | null; source: string };
+  }[];
   vertices: ({ no: number; lon: number; lat: number } & Record<`epsg_${number}`, XY>)[];
   legs: { from: number; to: number; bearing_deg: number; length_m: number }[];
   area: { sqm: number; hectares: number; acres: number };

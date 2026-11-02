@@ -32,6 +32,11 @@ services:
       # sign-in throttling sees real client addresses.
       FORWARDED_ALLOW_IPS: 172.30.0.0/24
       WEB_CONCURRENCY: ${API_WORKERS:-2}
+      ACCRA_TO_WGS84: ${ACCRA_TO_WGS84:-}
+      LEIGON_TO_WGS84: ${LEIGON_TO_WGS84:-}
+      DATUM_ROTATION_CONVENTION: ${DATUM_ROTATION_CONVENTION:-}
+      DATUM_PARAMETERS_SOURCE: ${DATUM_PARAMETERS_SOURCE:-}
+      DATUM_PARAMETERS_ACCURACY_M: ${DATUM_PARAMETERS_ACCURACY_M:-}
     depends_on:
       db:
         condition: service_healthy
