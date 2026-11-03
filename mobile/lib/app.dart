@@ -63,6 +63,7 @@ class CadastraApp extends StatelessWidget {
       services: services,
       child: MaterialApp(
         title: 'Cadastra Field',
+        debugShowCheckedModeBanner: false,
         theme: cadastraTheme(),
         // Signing out swaps the whole navigator back to the sign-in screen.
         home: ListenableBuilder(

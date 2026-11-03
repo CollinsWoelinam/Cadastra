@@ -46,7 +46,7 @@ class OfflineAreasScreen extends StatelessWidget {
                   child: Row(children: [
                     const Text('Saved on this device', style: TextStyle(fontWeight: FontWeight.w600)),
                     const Spacer(),
-                    Text('${areas.length} area${areas.length == 1 ? '' : 's'} · ${formatBytes(bytes)}',
+                    Text('${areas.length} area${areas.length == 1 ? '' : 's'}${bytes > 0 ? ' · ${formatBytes(bytes)}' : ''}',
                         style: const TextStyle(color: Palette.muted)),
                   ]),
                 ),

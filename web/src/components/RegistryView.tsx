@@ -10,8 +10,10 @@ import { canReview, useMe } from "@/components/Session";
 import { CheckIcon, DownloadIcon, SearchIcon } from "@/components/Icons";
 
 const STATUS_LABEL: Record<ParcelStatus, string> = { APPROVED: "Approved", PENDING: "Pending", REJECTED: "Rejected" };
-const EVENT_LABEL: Record<string, string> = { SUBMITTED: "Submitted", APPROVED: "Approved", REJECTED: "Rejected" };
-const EVENT_DOT: Record<string, string> = { APPROVED: "dot-green", REJECTED: "dot-red" };
+const EVENT_LABEL: Record<string, string> = {
+  SUBMITTED: "Submitted", APPROVED: "Approved", REJECTED: "Rejected", CERTIFICATE_ISSUED: "Certificate issued",
+};
+const EVENT_DOT: Record<string, string> = { APPROVED: "dot-green", REJECTED: "dot-red", CERTIFICATE_ISSUED: "dot-amber" };
 const TOGGLES: { status: ParcelStatus; swatch: string }[] = [
   { status: "APPROVED", swatch: "swatch-approved" },
   { status: "PENDING", swatch: "swatch-pending" },
@@ -135,6 +137,7 @@ export default function RegistryView() {
                     <strong>{EVENT_LABEL[e.event_type] ?? e.event_type}</strong>
                     {e.actor_name && <> by {e.actor_name}</>} · {formatDate(e.at)}
                     {typeof e.detail?.note === "string" && e.detail.note && <><br /><span className="muted">“{e.detail.note}”</span></>}
+                    {typeof e.detail?.number === "string" && <><br /><span className="muted">{e.detail.number}</span></>}
                   </span>
                 </li>
               ))}
