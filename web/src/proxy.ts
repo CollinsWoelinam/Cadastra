@@ -14,5 +14,5 @@ export function proxy(request: NextRequest) {
 export const config = {
   // Pages and the certificate PDF. /core answers 401 itself; certificate verification and
   // static assets stay public.
-  matcher: ["/((?!login|verify|api/auth|core|_next|maplibre|favicon.ico).*)"],
+  matcher: ["/((?!login|verify|api/auth|core|_next|maplibre|icon.svg|apple-icon.png).*)"],
 };

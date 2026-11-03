@@ -7,7 +7,7 @@ import QrCode from "@/components/QrCode";
 import { api, ApiError, formatBearing, FT_PER_M, type Certificate as Cert, type Parcel, type SurveyPlan } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { canReview, useMe } from "@/components/Session";
-import { BrandMark, DownloadIcon, WarningIcon } from "@/components/Icons";
+import { BrandMark, DownloadIcon, RegistrySeal, WarningIcon } from "@/components/Icons";
 
 declare global {
   interface Window { __certReady?: boolean }
@@ -89,7 +89,7 @@ export default function Certificate({ params }: { params: Promise<{ id: string }
         {!approved && <div className="watermark">{parcel.status === "REJECTED" ? "REJECTED" : "PROVISIONAL"}</div>}
         <header className="cert-head">
           <div className="cert-title">
-            <div className="cert-issuer"><BrandMark size={26} ring="#0B6E4F" /><span>LANDS REGISTRY · GHANA</span></div>
+            <div className="cert-issuer"><BrandMark size={26} color="#0B6E4F" /><span>LANDS REGISTRY · GHANA</span></div>
             <h1>{cert ? "Cadastral Survey Certificate" : approved ? "Survey Plan" : "Provisional Survey Plan"}</h1>
             <div className="cert-meta">
               {cert ? (
@@ -172,7 +172,10 @@ export default function Certificate({ params }: { params: Promise<{ id: string }
           <div><strong>{parcel.submitted_by_name ?? "—"}</strong>Surveyor · {formatDate(parcel.created_at)}</div>
           <div><strong>{parcel.reviewed_by_name ?? (parcel.reviewed_at ? "—" : "Awaiting review")}</strong>
             {parcel.reviewed_at ? `Reviewer, Lands Registry · ${formatDate(parcel.reviewed_at)}` : "Reviewer, Lands Registry"}</div>
-          <div><strong>Registry seal</strong>{cert ? `Certificate ${cert.number}` : "Not certified"}</div>
+          <div className="cert-seal">
+            {cert && <RegistrySeal size={64} />}
+            <span><strong>Registry seal</strong>{cert ? `Certificate ${cert.number}` : "Not certified"}</span>
+          </div>
         </div>
 
         <footer className="cert-footer">

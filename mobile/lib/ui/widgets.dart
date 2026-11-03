@@ -112,3 +112,45 @@ class Fact extends StatelessWidget {
         Text(value, key: valueKey, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
       ]);
 }
+
+/// Survey C: a boundary pillar seen from above, open on the right, around a gold survey point.
+class BrandMark extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const BrandMark({super.key, this.size = 32, this.color = Palette.green});
+
+  @override
+  Widget build(BuildContext context) =>
+      Semantics(label: 'Cadastra', child: CustomPaint(size: Size.square(size), painter: _SurveyCPainter(color)));
+}
+
+class _SurveyCPainter extends CustomPainter {
+  final Color color;
+
+  const _SurveyCPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final u = size.width / 100; // drawn on the brand's 100-unit grid
+    final small = size.width < 24;
+    final c = Path()
+      ..moveTo(71 * u, 29 * u)
+      ..lineTo(50 * u, 8 * u)
+      ..lineTo(8 * u, 50 * u)
+      ..lineTo(50 * u, 92 * u)
+      ..lineTo(71 * u, 71 * u);
+    canvas.drawPath(
+      c,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = (small ? 15 : 13) * u
+        ..strokeJoin = StrokeJoin.miter,
+    );
+    canvas.drawCircle(Offset(50 * u, 50 * u), (small ? 12 : 10) * u, Paint()..color = Palette.gold);
+  }
+
+  @override
+  bool shouldRepaint(_SurveyCPainter old) => old.color != color;
+}

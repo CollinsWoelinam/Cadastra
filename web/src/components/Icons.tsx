@@ -10,12 +10,35 @@ function Svg({ size = 18, color = "currentColor", strokeWidth = 2, children }: I
   );
 }
 
-export const BrandMark = ({ size = 28, ring = "#E0A526" }: { size?: number; ring?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 28 28" aria-hidden="true">
-    <rect x="4" y="4" width="20" height="20" rx="3" fill="none" stroke={ring} strokeWidth="2.2" transform="rotate(45 14 14)" />
-    <circle cx="14" cy="14" r="3.2" fill="#E0A526" />
-  </svg>
-);
+/** Survey C: a boundary pillar seen from above, open on the right, around a gold survey point. */
+export const BrandMark = ({ size = 28, color = "#FFFFFF" }: { size?: number; color?: string }) => {
+  // Heavier below 24 px so the mark survives favicon-like sizes.
+  const small = size < 24;
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+      <path d="M71 29 L50 8 L8 50 L50 92 L71 71" fill="none" stroke={color} strokeWidth={small ? 15 : 13} strokeLinejoin="miter" />
+      <circle cx="50" cy="50" r={small ? 12 : 10} fill="#E0A526" />
+    </svg>
+  );
+};
+
+/** The registry seal printed on certificates: the mark inside a lettered ring. */
+export function RegistrySeal({ size = 72, color = "#0B6E4F" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 220 220" role="img" aria-label="Seal of the Lands Registry, Ghana">
+      <defs><path id="cadastra-seal-ring" d="M110 110 m-82 0 a82 82 0 1 1 164 0 a82 82 0 1 1 -164 0" /></defs>
+      <circle cx="110" cy="110" r="104" fill="none" stroke={color} strokeWidth="4" />
+      <circle cx="110" cy="110" r="68" fill="none" stroke={color} strokeWidth="1.5" />
+      <text fontFamily="var(--font-mono)" fontSize="15" fontWeight="500" letterSpacing="4.2" fill={color}>
+        <textPath href="#cadastra-seal-ring">CADASTRA · LANDS REGISTRY · GHANA ·</textPath>
+      </text>
+      <g transform="translate(70 70) scale(0.8)">
+        <path d="M71 29 L50 8 L8 50 L50 92 L71 71" fill="none" stroke={color} strokeWidth="13" strokeLinejoin="miter" />
+        <circle cx="50" cy="50" r="10" fill="#E0A526" />
+      </g>
+    </svg>
+  );
+}
 
 export const SearchIcon = (p: IconProps) => <Svg {...p}><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></Svg>;
 export const PlusIcon = (p: IconProps) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;

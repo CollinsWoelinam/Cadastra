@@ -32,7 +32,7 @@ export default function AppHeader() {
       <header className="public-header">
         <div>
           <Link href="/verify" className="brand">
-            <BrandMark ring="#0B6E4F" />
+            <BrandMark color="#0B6E4F" />
             <span className="brand-name">Cadastra</span>
             <span className="brand-sub">Certificate verification</span>
           </Link>

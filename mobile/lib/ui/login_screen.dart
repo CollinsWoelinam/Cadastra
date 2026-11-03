@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
               key: _form,
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 const Row(children: [
-                  _BrandMark(),
+                  BrandMark(size: 34),
                   SizedBox(width: 10),
                   Text('Cadastra Field', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                 ]),
@@ -113,28 +113,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-}
-
-class _BrandMark extends StatelessWidget {
-  const _BrandMark();
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 32,
-        height: 32,
-        child: Stack(alignment: Alignment.center, children: [
-          Transform.rotate(
-            angle: 0.785398,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                border: Border.all(color: Palette.green, width: 2.4),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-          ),
-          Container(width: 8, height: 8, decoration: const BoxDecoration(color: Palette.gold, shape: BoxShape.circle)),
-        ]),
-      );
 }
